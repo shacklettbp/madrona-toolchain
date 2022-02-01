@@ -1,0 +1,62 @@
+name: Package
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set Package Name
+      run: echo "PACKAGE_NAME=madrona-deps-`git rev-parse --short HEAD`-${{ matrix.os }}" >> $GITHUB_ENV
+    - name: Make build dir
+      run: mkdir build
+    - name: CMake Config
+      run: cmake src -DCMAKE_INSTALL_PREFIX=build/$PACKAGE_NAME -B build
+    - name: Build
+      run: cmake --build build --parallel=3
+    - name: Install
+      run: cmake --install build
+    - name: Package
+      run: tar -C build -cf build/$PACKAGE_NAME.tar.zst $PACKAGE_NAME
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: ${{ env.PACKAGE_NAME }}
+        path: build/${{ env.PACKAGE_NAME }}.tar.zst
+        if-no-files-found: error
+        retention-days: 0
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compute Short Hash
+      run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
+    - name: Compute Package Prefix
+      run: echo "PACKAGE_PREFIX=madrona-deps-${{ env.SHORT_HASH }}" >> $GITHUB_ENV
+    - name: Download Ubuntu Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ env.PACKAGE_PREFIX }}-ubuntu-latest
+    - name: Download MacOS Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ env.PACKAGE_PREFIX }}-macos-latest
+    - name: Create Release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with: 
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: ${{ env.SHORT_HASH }}
+        prerelease: false
+        files: |
+          ${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst
+          ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst
