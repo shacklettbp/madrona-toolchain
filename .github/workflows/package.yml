@@ -66,8 +66,6 @@ jobs:
       run: mv ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst
     - name: Compute Full hash
       run: echo "FULL_HASH=`git rev-parse HEAD`" >> $GITHUB_ENV
-    - name: Get commit description
-      run: echo "COMMIT_DESC=`git log --format=%B -n 1 HEAD~1`" >> $GITHUB_ENV
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with: 
@@ -75,8 +73,7 @@ jobs:
         token: "${{ secrets.GITHUB_TOKEN }}"
         fail_on_unmatched_files: true
         prerelease: false
-        target_commitish: ${{ env.FULL_HASH }}
-        body: ${{ env.COMMIT_DESC }}
+        generate_release_notes: true
         files: |
           madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst
           madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst

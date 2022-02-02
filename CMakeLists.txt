@@ -44,6 +44,8 @@ if (MADRONA_USE_PREBUILT)
     FetchContent_Declare(MadronaPrecompiledDeps
         URL ${DEPS_URL}
         URL_HASH SHA256=${MADRONA_DEPS_HASH}
+        DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/download"
+        DOWNLOAD_NAME cur.tar # Can't name it .tar.zst or CMake will ignore
     )
 
     FetchContent_MakeAvailable(MadronaPrecompiledDeps)
