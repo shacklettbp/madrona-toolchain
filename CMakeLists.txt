@@ -118,6 +118,11 @@ else()
         HINTS "$ENV{VULKAN_SDK}/include")
 endif()
 
+add_library(madrona_sdl2 INTERFACE)
+target_link_libraries(madrona_sdl2
+    INTERFACE SDL2::SDL2
+)
+
 add_library(madrona_dxc SHARED IMPORTED)
 set_target_properties(madrona_dxc PROPERTIES IMPORTED_LOCATION "${MADRONA_DXC_LIB}")
 target_include_directories(madrona_dxc
