@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(VERSION 3.18)
-include(FetchContent)
-include(cmake/sys-detect.cmake)
 
 set(NAME madrona-deps)
 project(${NAME})
+
+include(FetchContent)
+include(cmake/sys-detect.cmake)
+include(cmake/current-hashes.cmake)
 
 option(MADRONA_USE_PREBUILT "Use prebuilt dependency binaries" ON)
 
@@ -26,18 +28,22 @@ endif()
 
 if (MADRONA_USE_PREBUILT)
     if (IS_LINUX)
-        set(DEPS_OS_NAME "ubuntu")
-        set(DEPS_HASH "aa29fcacc1db89351bc3f1011935077f091e72885a9590d720fa0f0f9173db41")
+        set(DEPS_OS_NAME "linux")
+        if (NOT DEFINED MADRONA_DEPS_HASH)
+            set(MADRONA_DEPS_HASH "${MADRONA_DEPS_LINUX_HASH}")
+        endif()
     elseif (IS_MAC)
-        set(DEPS_OS_NAME "macos")
-        set(DEPS_HASH "b7dc635f287462bd86f137029742bd5a5d80f32a7d91a4fb7fb341160590cd2f")
+        set(DEPS_OS_NAME "mac")
+        if (NOT DEFINED MADRONA_DEPS_HASH)
+            set(MADRONA_DEPS_HASH "${MADRONA_DEPS_MAC_HASH}")
+        endif()
     endif()
 
-    set(DEPS_URL "https://github.com/shacklettbp/madrona-deps/releases/download/${MADRONA_DEPS_VERSION}/madrona-deps-${MADRONA_DEPS_VERSION}-${DEPS_OS_NAME}-latest.tar.zst")
+    set(DEPS_URL "https://github.com/shacklettbp/madrona-deps/releases/download/${MADRONA_DEPS_VERSION}/madrona-deps-${MADRONA_DEPS_VERSION}-${DEPS_OS_NAME}.tar.zst")
 
     FetchContent_Declare(MadronaPrecompiledDeps
         URL ${DEPS_URL}
-        URL_HASH SHA256=${DEPS_HASH}
+        URL_HASH SHA256=${MADRONA_DEPS_HASH}
     )
 
     FetchContent_MakeAvailable(MadronaPrecompiledDeps)

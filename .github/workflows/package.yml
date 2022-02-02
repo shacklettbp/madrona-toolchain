@@ -39,10 +39,8 @@ jobs:
     needs: build
     steps:
     - uses: actions/checkout@v2
-    - name: Compute Short Hash
-      run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
-    - name: Compute Package Prefix
-      run: echo "PACKAGE_PREFIX=madrona-deps-${{ env.SHORT_HASH }}" >> $GITHUB_ENV
+    - name: Compute Initial Package Prefix
+      run: echo "PACKAGE_PREFIX=madrona-deps-`git rev-parse --short HEAD`" >> $GITHUB_ENV
     - name: Download Ubuntu Artifact
       uses: actions/download-artifact@v2
       with:
@@ -51,6 +49,20 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: ${{ env.PACKAGE_PREFIX }}-macos-latest
+    - name: Compute Ubuntu Hash
+      run: echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.xz)\")" > cmake/current-hashes.cmake
+    - name: Compute MacOS Hash
+      run: echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.xz)\")" >> cmake/current-hashes.cmake
+    - name: Commit New Hashes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      file_pattern: cmake/current-hashes.cmake
+      commit_message: Update hashes
+    - name: Compute Short Hash
+      run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
+    - name: Rename Ubuntu Package
+      run: mv ${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst
+    - name: Rename MacOS Package
+      run: mv ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst
     - name: Create Release
       uses: "marvinpinto/action-automatic-releases@latest"
       with: 
@@ -58,5 +70,5 @@ jobs:
         automatic_release_tag: ${{ env.SHORT_HASH }}
         prerelease: false
         files: |
-          ${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst
-          ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst
+          madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst
+          madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst
