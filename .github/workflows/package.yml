@@ -50,9 +50,9 @@ jobs:
       with:
         name: ${{ env.PACKAGE_PREFIX }}-macos-latest
     - name: Compute Ubuntu Hash
-      run: echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.xz)\")" > cmake/current-hashes.cmake
+      run: echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst)\")" > cmake/current-hashes.cmake
     - name: Compute MacOS Hash
-      run: echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.xz)\")" >> cmake/current-hashes.cmake
+      run: echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst)\")" >> cmake/current-hashes.cmake
     - name: Commit New Hashes
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
