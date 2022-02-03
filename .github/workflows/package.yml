@@ -83,8 +83,6 @@ jobs:
             name: "${{ env.SHORT_HASH }}",
           });
 
-          console.log(release)
-
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
           const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
 
@@ -94,11 +92,10 @@ jobs:
           const linux_dst = "madrona_deps-${{ env.SHORT_HASH }}-linux.tar.zst";
           const mac_dst = "madrona_deps-${{ env.SHORT_HASH }}-mac.tar.zst";
 
-
           github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            release_id: release.id,
+            release_id: release.data.id,
             name: linux_dst,
             data: linux_data,
           });
@@ -106,7 +103,7 @@ jobs:
           github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            release_id: release.id,
+            release_id: release.data.id,
             name: mac_dst,
             data: mac_data,
           });
