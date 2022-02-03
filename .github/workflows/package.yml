@@ -53,10 +53,14 @@ jobs:
       run: echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
     - name: Compute MacOS Hash
       run: echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
+    - name: Get Name
+      run: echo "COMMITTER_NAME=`git log --format='%an' HEAD^\!`" >> $GITHUB_ENV
+    - name: Get Email
+      run: echo "COMMITTER_EMAIL=`git log --format='%ae' HEAD^\!`" >> $GITHUB_ENV
     - name: Add Hashes
       run: git add cmake/current-hashes.cmake
     - name: Commit Hashes
-      run: git commit -m'Update Hashes' --author "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
+      run: git -c user.name="${{ env.COMMITTER_NAME }}" -c user.email="${{ env.COMMITTER_EMAIL }}@users.noreply.github.com" commit -m'Update Hashes'
     - name: Compute Short Hash
       run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
     - name: Compute Full hash
