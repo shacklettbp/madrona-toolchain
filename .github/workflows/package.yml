@@ -56,13 +56,13 @@ jobs:
     - name: Add Hashes
       run: git add cmake/current-hashes.cmake
     - name: Commit Hashes
-      run: git commit -m'Update Hashes' --author "${{ env.GITHUB_ACTOR }} <${{ env.GITHUB_ACTOR }}@users.noreply.github.com>"
+      run: git commit -m'Update Hashes' --author "${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>"
     - name: Compute Short Hash
       run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
     - name: Compute Full hash
       run: echo "FULL_HASH=`git rev-parse HEAD`" >> $GITHUB_ENV
     - name: Push Commit
-      run: git push "https://${{ env.GITHUB_ACTOR }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.GITHUB_REPOSITORY }}.git"
+      run: git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
     - name: Create Release
       uses: actions/github-script@v5
       with: 
