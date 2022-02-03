@@ -81,7 +81,7 @@ jobs:
             tag_name: "${{ env.SHORT_HASH }}",
             generate_release_notes: true,
             name: "${{ env.SHORT_HASH }}",
-            prerelease: true
+            draft: true
           });
 
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
@@ -116,5 +116,6 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             release_id: release.data.id,
-            prerelease: false,
+            tag_name: "${{ env.SHORT_HASH }}"
+            draft: false,
           });
