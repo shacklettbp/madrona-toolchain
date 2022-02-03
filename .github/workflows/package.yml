@@ -89,8 +89,8 @@ jobs:
           const linux_data = fs.readFileSync(linux_src);
           const mac_data = fs.readFileSync(mac_src);
 
-          const linux_dst = "madrona_deps-${{ env.SHORT_HASH }}-linux.tar.zst";
-          const mac_dst = "madrona_deps-${{ env.SHORT_HASH }}-mac.tar.zst";
+          const linux_dst = "madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst";
+          const mac_dst = "madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst";
 
           github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
