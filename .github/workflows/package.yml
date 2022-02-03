@@ -81,41 +81,37 @@ jobs:
             tag_name: "${{ env.SHORT_HASH }}",
             generate_release_notes: true,
             name: "${{ env.SHORT_HASH }}",
-            draft: true
+            draft: true,
           });
 
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
-          const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
-
-          const linux_data = fs.readFileSync(linux_src);
-          const mac_data = fs.readFileSync(mac_src);
-
           const linux_dst = "madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst";
+
+          const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
           const mac_dst = "madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst";
 
-          const linux_promise = github.rest.repos.uploadReleaseAsset({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            release_id: release.data.id,
-            name: linux_dst,
-            data: linux_data,
-          });
+          const variants = [[linux_src, linux_dst], [mac_src, mac_dst]];
+          let promises = [];
 
-          const mac_promise = github.rest.repos.uploadReleaseAsset({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            release_id: release.data.id,
-            name: mac_dst,
-            data: mac_data,
-          });
+          for (const [src, dst] of variants) {
+            const file_data = fs.readFileSync(src);
 
-          await linux_promise;
-          await mac_promise;
+            const promise = github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.data.id,
+              name: dst,
+              data: file_data,
+            });
+
+            promises.push(promise);
+          }
+          await Promise.all(promises);
 
           github.rest.repos.updateRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
             release_id: release.data.id,
-            tag_name: "${{ env.SHORT_HASH }}"
+            tag_name: "${{ env.SHORT_HASH }}",
             draft: false,
           });
