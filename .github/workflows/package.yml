@@ -53,27 +53,55 @@ jobs:
       run: echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
     - name: Compute MacOS Hash
       run: echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
-    - name: Commit New Hashes
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        file_pattern: cmake/current-hashes.cmake
-        commit_message: Update hashes
+    - name: Add Hashes
+      run: git add cmake/current-hashes.cmake
+    - name: Commit Hashes
+      run: git commit -m'Update Hashes' --author "${{ env.GITHUB_ACTOR }} <${{ env.GITHUB_ACTOR }}@users.noreply.github.com>"
     - name: Compute Short Hash
       run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
-    - name: Rename Ubuntu Package
-      run: mv ${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst
-    - name: Rename MacOS Package
-      run: mv ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst
     - name: Compute Full hash
       run: echo "FULL_HASH=`git rev-parse HEAD`" >> $GITHUB_ENV
+    - name: Push Commit
+      run: git push "https://${{ env.GITHUB_ACTOR }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ env.GITHUB_REPOSITORY }}.git"
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: actions/github-script@v5
       with: 
-        tag_name: ${{ env.SHORT_HASH }}
-        token: "${{ secrets.GITHUB_TOKEN }}"
-        fail_on_unmatched_files: true
-        prerelease: false
-        generate_release_notes: true
-        files: |
-          madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst
-          madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst
+        script: |
+          const fs = require("fs");
+
+          await github.rest.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: 'refs/tags/${{ env.SHORT_HASH }}',
+            sha: ${{ env.FULL_HASH }}
+          });
+
+          const release = await github.rest.repos.createRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag_name: ${{ env.SHORT_HASH }},
+            generate_release_notes: true,
+            name: ${{ env.SHORT_HASH }},
+          });
+
+          const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
+          const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
+
+          const linux_dst = "madrona_deps-${{ env.SHORT_HASH }}-linux.tar.zst";
+          const mac_dst = "madrona_deps-${{ env.SHORT_HASH }}-mac.tar.zst";
+
+          github.rest.repos.uploadReleaseAsset({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: release["id"],
+            name: linux_dst,
+            data: fs.readFileSync(linux_src),
+          });
+
+          github.rest.repos.uploadReleaseAsset({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: release["id"],
+            name: mac_dst,
+            data: fs.readFileSync(mac_src),
+          });

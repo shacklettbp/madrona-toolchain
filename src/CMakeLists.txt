@@ -9,6 +9,8 @@ include(ExternalProject)
 get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
 include(${PARENT_DIR}/cmake/sys-detect.cmake)
 
+include(versions.cmake)
+
 if (IS_MAC)
     set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
 endif()
@@ -48,7 +50,7 @@ endif()
 
 ExternalProject_Add(SDL
     GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG b424665e0899769b200231ba943353a5fee1b6b6
+    GIT_TAG "${SDL_VERSION}"
     GIT_SHALLOW ON
     PREFIX "${SDL_PREFIX}"
     INSTALL_DIR "${SDL_INSTALL}"
@@ -73,8 +75,6 @@ install(FILES ${spirv_cross_libs}
 find_package(Python 3.6 COMPONENTS Interpreter)
 
 # Vulkan SDK fetch. All platforms use the Vulkan SDK at least for the pre-compiled copy of DXC
-set(VULKAN_SDK_VERSION 1.2.198.1)
-
 if (IS_LINUX)
     set(VULKAN_URL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz")
     set(VULKAN_HASH "488df47afe317bc2cd1f03305f19e5ad7b58db12738f8ba097042ba57d758c9d")

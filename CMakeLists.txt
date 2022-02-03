@@ -8,7 +8,7 @@ include(FetchContent)
 include(cmake/sys-detect.cmake)
 include(cmake/current-hashes.cmake)
 
-option(MADRONA_USE_PREBUILT "Use prebuilt dependency binaries" ON)
+option(MADRONA_USE_BUNDLED "Use prebuilt dependency binaries" ON)
 
 find_package(Git QUIET)
 
@@ -26,7 +26,7 @@ if (NOT DEFINED MADRONA_DEPS_VERSION)
     )
 endif()
 
-if (MADRONA_USE_PREBUILT)
+if (MADRONA_USE_BUNDLED)
     if (IS_LINUX)
         set(DEPS_OS_NAME "linux")
         if (NOT DEFINED MADRONA_DEPS_HASH)
@@ -74,7 +74,7 @@ if (MADRONA_USE_PREBUILT)
         )
         
         add_library(madrona_vk_loader SHARED IMPORTED)
-        set_target_properties(madrona_vk_loader IMPORTED_LOCATION "${vk_loader_loc}")
+        set_target_properties(madrona_vk_loader PROPERTIES IMPORTED_LOCATION "${vk_loader_loc}")
     endif()
     
     find_library(MADRONA_DXC_LIB dxcompiler
@@ -125,13 +125,13 @@ target_link_libraries(madrona_sdl2
     INTERFACE SDL2::SDL2
 )
 
-add_library(madrona_dxc SHARED IMPORTED)
+add_library(madrona_dxc SHARED IMPORTED GLOBAL)
 set_target_properties(madrona_dxc PROPERTIES IMPORTED_LOCATION "${MADRONA_DXC_LIB}")
 target_include_directories(madrona_dxc
     INTERFACE "${MADRONA_DXC_INCLUDE_DIR}"
 )
 
-add_library(madrona_spirv_cross SHARED IMPORTED)
+add_library(madrona_spirv_cross SHARED IMPORTED GLOBAL)
 set_target_properties(madrona_spirv_cross PROPERTIES IMPORTED_LOCATION "${MADRONA_SPIRV_CROSS_LIB}")
 target_include_directories(madrona_spirv_cross
     INTERFACE "${MADRONA_SPIRV_CROSS_INCLUDE_DIR}"
