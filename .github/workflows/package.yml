@@ -81,6 +81,7 @@ jobs:
             tag_name: "${{ env.SHORT_HASH }}",
             generate_release_notes: true,
             name: "${{ env.SHORT_HASH }}",
+            prerelease: true
           });
 
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
@@ -92,7 +93,7 @@ jobs:
           const linux_dst = "madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst";
           const mac_dst = "madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst";
 
-          github.rest.repos.uploadReleaseAsset({
+          const linux_promise = github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
             release_id: release.data.id,
@@ -100,10 +101,20 @@ jobs:
             data: linux_data,
           });
 
-          github.rest.repos.uploadReleaseAsset({
+          const mac_promise = github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
             release_id: release.data.id,
             name: mac_dst,
             data: mac_data,
+          });
+
+          await linux_promise;
+          await mac_promise;
+
+          github.rest.repos.updateRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: release.data.id,
+            prerelease: false,
           });
