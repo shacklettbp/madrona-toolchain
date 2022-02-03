@@ -56,7 +56,7 @@ jobs:
     - name: Commit and Push
       run: |
         git add cmake/current-hashes.cmake
-        git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m'Update Hashes' --author=. 
+        git -c user.name="${{ github.actor }}" -c user.email="${{ github.actor }}@users.noreply.github.com" commit -m'Update Hashes' --author=.
         git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
     - name: Compute New Commit Hashes
       run: |
@@ -83,24 +83,30 @@ jobs:
             name: "${{ env.SHORT_HASH }}",
           });
 
+          console.log(release)
+
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
           const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
+
+          const linux_data = fs.readFileSync(linux_src);
+          const mac_data = fs.readFileSync(mac_src);
 
           const linux_dst = "madrona_deps-${{ env.SHORT_HASH }}-linux.tar.zst";
           const mac_dst = "madrona_deps-${{ env.SHORT_HASH }}-mac.tar.zst";
 
+
           github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            release_id: release["id"],
+            release_id: release.id,
             name: linux_dst,
-            data: fs.readFileSync(linux_src),
+            data: linux_data,
           });
 
           github.rest.repos.uploadReleaseAsset({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            release_id: release["id"],
+            release_id: release.id,
             name: mac_dst,
-            data: fs.readFileSync(mac_src),
+            data: mac_data,
           });
