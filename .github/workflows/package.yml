@@ -49,24 +49,19 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: ${{ env.PACKAGE_PREFIX }}-macos-latest
-    - name: Compute Ubuntu Hash
-      run: echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
-    - name: Compute MacOS Hash
-      run: echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
-    - name: Get Name
-      run: echo "COMMITTER_NAME=`git log --format='%an' HEAD^\!`" >> $GITHUB_ENV
-    - name: Get Email
-      run: echo "COMMITTER_EMAIL=`git log --format='%ae' HEAD^\!`" >> $GITHUB_ENV
-    - name: Add Hashes
-      run: git add cmake/current-hashes.cmake
-    - name: Commit Hashes
-      run: git -c user.name="${{ env.COMMITTER_NAME }}" -c user.email="${{ env.COMMITTER_EMAIL }}@users.noreply.github.com" commit -m'Update Hashes'
-    - name: Compute Short Hash
-      run: echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
-    - name: Compute Full hash
-      run: echo "FULL_HASH=`git rev-parse HEAD`" >> $GITHUB_ENV
-    - name: Push Commit
-      run: git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+    - name: Compute Tarball Hashes
+      run: |
+        echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
+        echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
+    - name: Commit and Push
+      run: |
+        git add cmake/current-hashes.cmake
+        git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" commit -m'Update Hashes' --author=. 
+        git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+    - name: Compute New Commit Hashes
+      run: |
+        echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
+        echo "FULL_HASH=`git rev-parse HEAD`" >> $GITHUB_ENV
     - name: Create Release
       uses: actions/github-script@v5
       with: 
@@ -77,15 +72,15 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             ref: 'refs/tags/${{ env.SHORT_HASH }}',
-            sha: ${{ env.FULL_HASH }}
+            sha: "${{ env.FULL_HASH }}",
           });
 
           const release = await github.rest.repos.createRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            tag_name: ${{ env.SHORT_HASH }},
+            tag_name: "${{ env.SHORT_HASH }}",
             generate_release_notes: true,
-            name: ${{ env.SHORT_HASH }},
+            name: "${{ env.SHORT_HASH }}",
           });
 
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
