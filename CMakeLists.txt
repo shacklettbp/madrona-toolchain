@@ -27,15 +27,15 @@ if (NOT DEFINED MADRONA_DEPS_VERSION)
 endif()
 
 if (MADRONA_USE_BUNDLED)
-    if (IS_LINUX)
+    if (MADRONA_LINUX)
         set(DEPS_OS_NAME "linux")
         if (NOT DEFINED MADRONA_DEPS_HASH)
             set(MADRONA_DEPS_HASH "${MADRONA_DEPS_LINUX_HASH}")
         endif()
-    elseif (IS_MAC)
+    elseif (MADRONA_MACOS)
         set(DEPS_OS_NAME "mac")
         if (NOT DEFINED MADRONA_DEPS_HASH)
-            set(MADRONA_DEPS_HASH "${MADRONA_DEPS_MAC_HASH}")
+            set(MADRONA_DEPS_HASH "${MADRONA_DEPS_MACOS_HASH}")
         endif()
     endif()
 
@@ -46,6 +46,7 @@ if (MADRONA_USE_BUNDLED)
         URL_HASH SHA256=${MADRONA_DEPS_HASH}
         DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/download"
         DOWNLOAD_NAME cur.tar # Can't name it .tar.zst or CMake will ignore
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
 
     FetchContent_MakeAvailable(MadronaPrecompiledDeps)
@@ -59,14 +60,14 @@ if (MADRONA_USE_BUNDLED)
         NO_DEFAULT_PATH
     )
 
-    if (IS_LINUX OR IS_WINDOWS)
+    if (MADRONA_LINUX OR MADRONA_WINDOWS)
         add_library(madrona_vk_hdrs INTERFACE)
         target_include_directories(madrona_vk_hdrs
             INTERFACE "${DEP_ROOT}/vk_sdk/include"
         )
     endif()
 
-    if (IS_LINUX)
+    if (MADRONA_LINUX)
         find_library(vk_loader_loc vulkan
             PATHS "${DEP_ROOT}/vk_sdk/lib"
             REQUIRED
@@ -94,7 +95,7 @@ if (MADRONA_USE_BUNDLED)
 else()
     find_package(SDL2 REQUIRED)
 
-    if (IS_LINUX OR IS_WINDOWS)
+    if (MADRONA_LINUX OR MADRONA_WINDOWS)
         find_package(Vulkan REQUIRED)
         add_library(madrona_vk_hdrs INTERFACE)
         target_include_directories(madrona_vk_hdrs
@@ -102,7 +103,7 @@ else()
         )
     endif()
 
-    if (IS_LINUX)
+    if (MADRONA_LINUX)
         add_library(madrona_vk_loader INTERFACE)
         target_link_libraries(madrona_vk_loader INTERFACE
             ${Vulkan_LIBRARIES}

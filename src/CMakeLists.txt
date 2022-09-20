@@ -11,7 +11,7 @@ include(${PARENT_DIR}/cmake/sys-detect.cmake)
 
 include(versions.cmake)
 
-if (IS_MAC)
+if (MADRONA_MACOS)
     set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
 endif()
 
@@ -30,13 +30,13 @@ list(APPEND SDL_ARGS
     "-DSDL_DISKAUDIO=OFF"
 )
 
-if (IS_LINUX)
+if (MADRONA_LINUX)
     list(APPEND SDL_ARGS
         "-DSDL_X11=ON"
         "-DSDL_OPENGL=ON"
         "-DSDL_VULKAN=ON"
     )
-elseif (IS_MAC)
+elseif (MADRONA_MACOS)
     string(REPLACE ";" "$<SEMICOLON>" CMAKE_OSX_ARCHITECTURES_ "${CMAKE_OSX_ARCHITECTURES}")
     list(APPEND SDL_ARGS
         "-DSDL_COCOA=ON"
@@ -55,6 +55,7 @@ ExternalProject_Add(SDL
     PREFIX "${SDL_PREFIX}"
     INSTALL_DIR "${SDL_INSTALL}"
     CMAKE_ARGS ${SDL_ARGS}
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 install(DIRECTORY "${SDL_INSTALL}/include/SDL2"
@@ -75,11 +76,11 @@ install(FILES ${spirv_cross_libs}
 find_package(Python 3.6 COMPONENTS Interpreter)
 
 # Vulkan SDK fetch. All platforms use the Vulkan SDK at least for the pre-compiled copy of DXC
-if (IS_LINUX)
+if (MADRONA_LINUX)
     set(VULKAN_URL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz")
     set(VULKAN_HASH "488df47afe317bc2cd1f03305f19e5ad7b58db12738f8ba097042ba57d758c9d")
     set(VULKAN_NO_EXTRACT OFF)
-elseif (IS_MAC)
+elseif (MADRONA_MACOS)
     set(VULKAN_DMG_NAME "vulkansdk-macos-${VULKAN_SDK_VERSION}.dmg")
     set(VULKAN_URL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/mac/${VULKAN_DMG_NAME}")
     set(VULKAN_HASH "59f08f86672ff8f0a452c309883bf6bf46ce70e0d01a86c23a044e497c06dd17")
@@ -94,9 +95,9 @@ FetchContent_Declare(VulkanSDK
 
 FetchContent_MakeAvailable(VulkanSDK)
 
-if (IS_LINUX)
+if (MADRONA_LINUX)
     set(VULKAN_SDK_ROOT "${vulkansdk_SOURCE_DIR}/x86_64")
-elseif (IS_MAC)
+elseif (MADRONA_MACOS)
     execute_process(
         COMMAND "${Python_EXECUTABLE}" "${PARENT_DIR}/scripts/extract_mac_vulkan_sdk.py" "${vulkansdk_SOURCE_DIR}/${VULKAN_DMG_NAME}" "${VULKAN_HASH}" "${vulkansdk_SOURCE_DIR}" "${sevenzip_SOURCE_DIR}/7zz"
         COMMAND_ERROR_IS_FATAL ANY
@@ -105,13 +106,13 @@ elseif (IS_MAC)
     set(VULKAN_SDK_ROOT "${vulkansdk_SOURCE_DIR}/macOS")
 endif()
 
-if (IS_LINUX OR IS_WINDOWS)
+if (MADRONA_LINUX OR MADRONA_WINDOWS)
     install(DIRECTORY ${VULKAN_SDK_ROOT}/include/vulkan
         DESTINATION vk_sdk/include/
     )
 endif()
 
-if (IS_LINUX)
+if (MADRONA_LINUX)
     file(GLOB vk_loader_libs ${VULKAN_SDK_ROOT}/lib/libvulkan*)
 
     install(FILES ${vk_loader_libs}
