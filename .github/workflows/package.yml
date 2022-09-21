@@ -52,7 +52,7 @@ jobs:
     - name: Compute Tarball Hashes
       run: |
         echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
-        echo "set(MADRONA_DEPS_MAC_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
+        echo "set(MADRONA_DEPS_MACOS_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
     - name: Commit and Push
       run: |
         git add cmake/current-hashes.cmake
