@@ -53,12 +53,14 @@ if (MADRONA_USE_BUNDLED)
 
     set(DEP_ROOT ${madronaprecompileddeps_SOURCE_DIR})
 
-    find_package(SDL2
-        PATHS "${DEP_ROOT}/SDL"
-        QUIET
-        REQUIRED
-        NO_DEFAULT_PATH
-    )
+    if (MADRONA_LINUX)
+        find_package(SDL2
+            PATHS "${DEP_ROOT}/SDL"
+            QUIET
+            REQUIRED
+            NO_DEFAULT_PATH
+        )
+    endif()
 
     if (MADRONA_LINUX OR MADRONA_WINDOWS)
         add_library(madrona_vk_hdrs INTERFACE)
@@ -93,7 +95,9 @@ if (MADRONA_USE_BUNDLED)
     set(MADRONA_SPIRV_CROSS_INCLUDE_DIR "${DEP_ROOT}/spirv_cross/include")
     
 else()
-    find_package(SDL2 REQUIRED)
+    if (MADRONA_LINUX)
+        find_package(SDL2 REQUIRED)
+    endif()
 
     if (MADRONA_LINUX OR MADRONA_WINDOWS)
         find_package(Vulkan REQUIRED)
@@ -121,10 +125,12 @@ else()
         HINTS "$ENV{VULKAN_SDK}/include")
 endif()
 
-add_library(madrona_sdl2 INTERFACE)
-target_link_libraries(madrona_sdl2
-    INTERFACE SDL2::SDL2
-)
+if (MADRONA_LINUX)
+    add_library(madrona_sdl2 INTERFACE)
+    target_link_libraries(madrona_sdl2
+        INTERFACE SDL2::SDL2
+    )
+endif()
 
 add_library(madrona_dxc SHARED IMPORTED GLOBAL)
 set_target_properties(madrona_dxc PROPERTIES IMPORTED_LOCATION "${MADRONA_DXC_LIB}")

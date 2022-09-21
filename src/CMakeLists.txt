@@ -15,59 +15,46 @@ if (MADRONA_MACOS)
     set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
 endif()
 
-set (SDL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/SDL")
-set (SDL_INSTALL "${SDL_PREFIX}/install")
-
-list(APPEND SDL_ARGS
-    "-DCMAKE_INSTALL_PREFIX=${SDL_PREFIX}/install"
-    "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
-    "-DSDL_SHARED=ON"
-    "-DSDL_STATIC=OFF"
-    "-DSDL_ASSERTIONS=release"
-    "-DSDL_WAYLAND=OFF"
-    "-DSDL_KMSDRM=OFF"
-    "-DSDL_OPENGLES=OFF"
-    "-DSDL_DISKAUDIO=OFF"
-)
-
 if (MADRONA_LINUX)
+    set (SDL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/SDL")
+    set (SDL_INSTALL "${SDL_PREFIX}/install")
+    
     list(APPEND SDL_ARGS
+        "-DCMAKE_INSTALL_PREFIX=${SDL_PREFIX}/install"
+        "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+        "-DSDL_SHARED=ON"
+        "-DSDL_STATIC=OFF"
+        "-DSDL_ASSERTIONS=release"
+        "-DSDL_WAYLAND=OFF"
+        "-DSDL_KMSDRM=OFF"
+        "-DSDL_OPENGLES=OFF"
+        "-DSDL_DISKAUDIO=OFF"
         "-DSDL_X11=ON"
         "-DSDL_OPENGL=ON"
         "-DSDL_VULKAN=ON"
     )
-elseif (MADRONA_MACOS)
-    string(REPLACE ";" "$<SEMICOLON>" CMAKE_OSX_ARCHITECTURES_ "${CMAKE_OSX_ARCHITECTURES}")
-    list(APPEND SDL_ARGS
-        "-DSDL_COCOA=ON"
-        "-DSDL_METAL=ON"
-        "-DSDL_OPENGL=OFF"
-        "-DSDL_VULKAN=OFF"
-        "-DSDL_RENDER_METAL=OFF"
-        "-DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES_}"
+
+    ExternalProject_Add(SDL
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG "${SDL_VERSION}"
+        GIT_SHALLOW ON
+        PREFIX "${SDL_PREFIX}"
+        INSTALL_DIR "${SDL_INSTALL}"
+        CMAKE_ARGS ${SDL_ARGS}
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    
+    install(DIRECTORY "${SDL_INSTALL}/include/SDL2"
+        DESTINATION SDL/include
+    )
+    
+    install(DIRECTORY ${SDL_INSTALL}/lib/
+        DESTINATION SDL/lib
+        FILES_MATCHING
+            PATTERN *
+            PATTERN *pkgconfig* EXCLUDE
     )
 endif()
-
-ExternalProject_Add(SDL
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG "${SDL_VERSION}"
-    GIT_SHALLOW ON
-    PREFIX "${SDL_PREFIX}"
-    INSTALL_DIR "${SDL_INSTALL}"
-    CMAKE_ARGS ${SDL_ARGS}
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-
-install(DIRECTORY "${SDL_INSTALL}/include/SDL2"
-    DESTINATION SDL/include
-)
-
-install(DIRECTORY ${SDL_INSTALL}/lib/
-    DESTINATION SDL/lib
-    FILES_MATCHING
-        PATTERN *
-        PATTERN *pkgconfig* EXCLUDE
-)
 
 install(FILES ${spirv_cross_libs}
     DESTINATION spirv_cross/lib
