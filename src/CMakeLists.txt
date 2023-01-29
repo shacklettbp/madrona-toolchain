@@ -30,7 +30,7 @@ if (MADRONA_LINUX)
         "-DSDL_OPENGLES=OFF"
         "-DSDL_DISKAUDIO=OFF"
         "-DSDL_X11=ON"
-        "-DSDL_OPENGL=ON"
+        "-DSDL_OPENGL=OFF"
         "-DSDL_VULKAN=ON"
     )
 
@@ -65,12 +65,12 @@ find_package(Python 3.6 COMPONENTS Interpreter)
 # Vulkan SDK fetch. All platforms use the Vulkan SDK at least for the pre-compiled copy of DXC
 if (MADRONA_LINUX)
     set(VULKAN_URL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.gz")
-    set(VULKAN_HASH "47c3a5bd033abf0fc2a9df113a8b7fb829a51d86d234385bd742310afc116316")
+    set(VULKAN_HASH "92a44158004a05fd3fba18963eebe3698442c93488e94c126361851a3ea002cf")
     set(VULKAN_NO_EXTRACT OFF)
 elseif (MADRONA_MACOS)
     set(VULKAN_DMG_NAME "vulkansdk-macos-${VULKAN_SDK_VERSION}.dmg")
     set(VULKAN_URL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/mac/${VULKAN_DMG_NAME}")
-    set(VULKAN_HASH "35e35e8ac0fa13fa90c35253d5160f147ac99b39e296f6502a9dce9f41795838")
+    set(VULKAN_HASH "18b138c3fd91d5d457ec60bf264296b04332715bb379babc90c6e9c4fa45086c")
     set(VULKAN_NO_EXTRACT ON)
 endif()
 
@@ -97,13 +97,21 @@ if (MADRONA_LINUX OR MADRONA_WINDOWS)
     install(DIRECTORY ${VULKAN_SDK_ROOT}/include/vulkan
         DESTINATION vk_sdk/include/
     )
-endif()
 
-if (MADRONA_LINUX)
     file(GLOB vk_loader_libs ${VULKAN_SDK_ROOT}/lib/libvulkan*)
 
     install(FILES ${vk_loader_libs}
         DESTINATION vk_sdk/lib
+    )
+
+    install(DIRECTORY ${VULKAN_SDK_ROOT}/include/spirv-tools
+        DESTINATION spirv_tools/include/
+    )
+
+    file(GLOB spirv_tools_libs ${VULKAN_SDK_ROOT}/lib/*SPIRV-Tools-shared*)
+    
+    install(FILES ${spirv_tools_libs}
+        DESTINATION spirv_tools/lib
     )
 endif()
 
@@ -117,12 +125,14 @@ install(FILES ${dxc_libs}
     DESTINATION dxc/lib
 )
 
-install(DIRECTORY ${VULKAN_SDK_ROOT}/include/spirv_cross
-    DESTINATION spirv_cross/include/
-)
+if (MADRONA_MACOS)
+    install(DIRECTORY ${VULKAN_SDK_ROOT}/include/spirv_cross
+        DESTINATION spirv_cross/include/
+    )
 
-file(GLOB spirv_cross_libs ${VULKAN_SDK_ROOT}/lib/*spirv-cross-c-shared*)
-
-install(FILES ${spirv_cross_libs}
-    DESTINATION spirv_cross/lib
-)
+    file(GLOB spirv_cross_libs ${VULKAN_SDK_ROOT}/lib/*spirv-cross-c-shared*)
+    
+    install(FILES ${spirv_cross_libs}
+        DESTINATION spirv_cross/lib
+    )
+endif ()

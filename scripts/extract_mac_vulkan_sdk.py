@@ -32,14 +32,34 @@ with open(dat_path, 'rb') as f:
 
 subprocess.run(["hdiutil", "detach", "tmp"], check=True, capture_output=True)
 
+# Search for every occurrence of the 7z header in the data file.
+# This is fragile, because technically the header can repeat inside the
+# 7z archive itself. Should technically parse the QT binary format or the
+# 7z stream info to figure out the size of each 7z in the data file.
 hdr_7z = b'7z' + bytes([0xBC, 0xAF, 0x27, 0x1C])
-offset = data.find(hdr_7z)
 
-with open("tmp/dat.7z", "wb") as f:
-    f.write(data[offset:])
+offsets = []
+prev_offset = 0
+while True:
+    offset = data.find(hdr_7z, prev_offset)
+    if offset == -1:
+        break
+    prev_offset = offset + 4
+    offsets.append(offset)
 
-subprocess.run(["/usr/bin/env", "tar", "-x", "-f", "tmp/dat.7z", "macOS"],
-        check=True, capture_output=True)
+for i, offset in enumerate(offsets):
+    next_offset = offsets[i + 1] if i < len(offsets) - 1 else len(data)
+    with open(f"tmp/dat{i}.7z", "wb") as f:
+        f.write(data[offset:next_offset])
+
+for i in range(len(offsets)):
+    try:
+        subprocess.run(["/usr/bin/env", "tar", "-x", "-f", f"tmp/dat{i}.7z", "macOS"],
+            check=True, capture_output=True)
+
+        break
+    except:
+        pass
 
 with open("tmp/hash", "w") as f:
     f.write(sys.argv[2])
