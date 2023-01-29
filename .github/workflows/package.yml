@@ -13,12 +13,12 @@ jobs:
         os: [ubuntu-latest, macos-latest]
 
     steps:
-    - name: Install dependencies
+    - if: matrix.os == "ubuntu-latest"
+      name: Install dependencies
       run: |
         sudo apt-get install -y clang-15
         echo "CXX=clang++-15" >> $GITHUB_ENV
         echo "CC=clang-15" >> $GITHUB_ENV
-      if: ${{ matrix.os == ubuntu-latest }}
     - uses: actions/checkout@v2
     - name: Set Package Name
       run: echo "PACKAGE_NAME=madrona-deps-`git rev-parse --short HEAD`-${{ matrix.os }}" >> $GITHUB_ENV
