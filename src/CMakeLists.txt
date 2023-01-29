@@ -6,6 +6,8 @@ project(${NAME})
 include(FetchContent)
 include(ExternalProject)
 
+find_package(Python 3.6 COMPONENTS Interpreter)
+
 get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
 include(${PARENT_DIR}/cmake/sys-detect.cmake)
 
@@ -15,13 +17,59 @@ if (MADRONA_MACOS)
     set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
 endif()
 
+set (LLVM_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/llvm")
+set (LLVM_INSTALL "${LLVM_PREFIX}/install")
+
+list(APPEND LLVM_ARGS
+    "-DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL}"
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DLIBCXX_ENABLE_STATIC=OFF"
+    "-DLIBCXX_CXX_ABI=libcxxabi"
+    "-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON"
+    "-DLIBCXX_ENABLE_EXCEPTIONS=OFF"
+    "-DLIBCXX_ENABLE_RTTI=OFF"
+    "-DLIBCXX_INCLUDE_TESTS=OFF"
+    "-DLIBCXX_INCLUDE_BENCHMARKS=OFF"
+    "-DLIBCXX_ABI_NAMESPACE=__mad1"
+    "-DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi"
+)
+
+if (MADRONA_MACOS)
+    list(APPEND LLVM_ARGS
+        "-DCMAKE_OSX_ARCHITECTURES=arm64$<SEMICOLON>x86_64"
+    )
+endif()
+
+ExternalProject_Add(llvm
+    URL https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz
+    URL_HASH SHA256=8b5fcb24b4128cf04df1b0b9410ce8b1a729cb3c544e6da885d234280dedeac6
+    PREFIX "${LLVM_PREFIX}"
+    INSTALL_DIR "${LLVM_INSTALL}"
+    CMAKE_ARGS ${LLVM_ARGS}
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR runtimes
+    BUILD_COMMAND ${CMAKE_COMMAND} --build ${LLVM_PREFIX}/src/llvm-build --target cxx --target cxxabi
+)
+
+install(DIRECTORY ${LLVM_INSTALL}/include/c++
+    DESTINATION libcxx/include/
+)
+
+install(DIRECTORY ${LLVM_INSTALL}/lib/
+    DESTINATION libcxx/lib
+    FILES_MATCHING
+        PATTERN *
+        PATTERN *abi* EXCLUDE
+        PATTERN *experimental* EXCLUDE
+)
+
 if (MADRONA_LINUX)
     set (SDL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/SDL")
     set (SDL_INSTALL "${SDL_PREFIX}/install")
     
     list(APPEND SDL_ARGS
-        "-DCMAKE_INSTALL_PREFIX=${SDL_PREFIX}/install"
-        "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+        "-DCMAKE_INSTALL_PREFIX=${SDL_INSTALL}"
+        "-DCMAKE_BUILD_TYPE=Release"
         "-DSDL_SHARED=ON"
         "-DSDL_STATIC=OFF"
         "-DSDL_ASSERTIONS=release"
@@ -55,12 +103,6 @@ if (MADRONA_LINUX)
             PATTERN *pkgconfig* EXCLUDE
     )
 endif()
-
-install(FILES ${spirv_cross_libs}
-    DESTINATION spirv_cross/lib
-)
-
-find_package(Python 3.6 COMPONENTS Interpreter)
 
 # Vulkan SDK fetch. All platforms use the Vulkan SDK at least for the pre-compiled copy of DXC
 if (MADRONA_LINUX)

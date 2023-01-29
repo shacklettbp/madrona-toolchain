@@ -138,8 +138,10 @@ target_include_directories(madrona_dxc
     INTERFACE "${MADRONA_DXC_INCLUDE_DIR}"
 )
 
-add_library(madrona_spirv_cross SHARED IMPORTED GLOBAL)
-set_target_properties(madrona_spirv_cross PROPERTIES IMPORTED_LOCATION "${MADRONA_SPIRV_CROSS_LIB}")
-target_include_directories(madrona_spirv_cross
-    INTERFACE "${MADRONA_SPIRV_CROSS_INCLUDE_DIR}"
-)
+if (MADRONA_MACOS)
+    add_library(madrona_spirv_cross SHARED IMPORTED GLOBAL)
+    set_target_properties(madrona_spirv_cross PROPERTIES IMPORTED_LOCATION "${MADRONA_SPIRV_CROSS_LIB}")
+    target_include_directories(madrona_spirv_cross
+        INTERFACE "${MADRONA_SPIRV_CROSS_INCLUDE_DIR}"
+    )
+endif ()
