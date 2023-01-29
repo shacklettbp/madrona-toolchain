@@ -20,6 +20,7 @@ jobs:
         sudo add-apt-repository -y "deb http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-15 main"
         sudo add-apt-repository -y "deb-src http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-15 main"
         sudo apt-get update -y
+        sudo apt-get upgrade -y
         sudo apt-get install -y clang-15
         echo "CXX=clang++-15" >> $GITHUB_ENV
         echo "CC=clang-15" >> $GITHUB_ENV
