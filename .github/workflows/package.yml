@@ -10,20 +10,19 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-22.04, macos-latest]
 
     steps:
-    - if: matrix.os == 'ubuntu-latest'
+    - if: matrix.os == 'ubuntu-22.04'
       name: Install dependencies
       run: |
         wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-        sudo add-apt-repository -y "deb http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-15 main"
-        sudo add-apt-repository -y "deb-src http://apt.llvm.org/kinetic/ llvm-toolchain-kinetic-15 main"
+        sudo add-apt-repository -y "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
+        sudo add-apt-repository -y "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
         sudo apt-get update -y
-        sudo apt-get upgrade -y
         sudo apt-get install -y clang-15
-        echo "CXX=clang++-15" >> $GITHUB_ENV
         echo "CC=clang-15" >> $GITHUB_ENV
+        echo "CXX=clang++-15" >> $GITHUB_ENV
     - uses: actions/checkout@v2
     - name: Set Package Name
       run: echo "PACKAGE_NAME=madrona-deps-`git rev-parse --short HEAD`-${{ matrix.os }}" >> $GITHUB_ENV
@@ -46,7 +45,7 @@ jobs:
         retention-days: 0
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build
     steps:
     - uses: actions/checkout@v2
@@ -55,14 +54,14 @@ jobs:
     - name: Download Ubuntu Artifact
       uses: actions/download-artifact@v2
       with:
-        name: ${{ env.PACKAGE_PREFIX }}-ubuntu-latest
+        name: ${{ env.PACKAGE_PREFIX }}-ubuntu-22.04
     - name: Download MacOS Artifact
       uses: actions/download-artifact@v2
       with:
         name: ${{ env.PACKAGE_PREFIX }}-macos-latest
     - name: Compute Tarball Hashes
       run: |
-        echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-latest.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
+        echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-22.04.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
         echo "set(MADRONA_DEPS_MACOS_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
     - name: Commit and Push
       run: |
@@ -95,7 +94,7 @@ jobs:
             draft: true,
           });
 
-          const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-latest.tar.zst";
+          const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-22.04.tar.zst";
           const linux_dst = "madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst";
 
           const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
