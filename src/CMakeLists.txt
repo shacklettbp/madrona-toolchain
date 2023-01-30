@@ -152,9 +152,9 @@ if (MADRONA_LINUX OR MADRONA_WINDOWS)
         DESTINATION vk_sdk/layers/lib/
     )
 
-    foreach (layer_lib in ${vk_layer_libs})
+    foreach (layer_lib ${vk_layer_libs})
         get_filename_component(layer_file "${layer_lib}" NAME)
-        install(CODE "execute_process(COMMAND strip vk_sdk/layers/lib/${layer_file})")
+        install(CODE "execute_process(COMMAND strip ${CMAKE_INSTALL_PREFIX}/vk_sdk/layers/lib/${layer_file})")
     endforeach()
 
     install(DIRECTORY ${VULKAN_SDK_ROOT}/etc/vulkan/explicit_layer.d
