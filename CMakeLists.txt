@@ -58,8 +58,11 @@ if (MADRONA_USE_BUNDLED)
         target_compile_options(madrona_libcxx INTERFACE
             -nostdinc++ -nostdlib++
         )
+        target_link_options(madrona_libcxx INTERFACE
+            -nostdlib++
+        )
         target_include_directories(madrona_libcxx SYSTEM INTERFACE
-            ${DEP_ROOT}/libcxx/include/c++/v1
+            $<BUILD_INTERFACE:${DEP_ROOT}/libcxx/include/c++/v1>
         )
 
         find_library(MADRONA_BUNDLED_LIBCXX c++
@@ -155,6 +158,16 @@ else()
             HINTS "$ENV{VULKAN_SDK}/include")
     endif()
 endif()
+
+# FIXME proper install support
+install(TARGETS madrona_libcxx
+    EXPORT madronaLibCXXTarget
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}
+)
+
+install(EXPORT madronaLibCXXTarget
+    DESTINATION ${CMAKE_INSTALL_PREFIX}
+)
 
 if (MADRONA_LINUX)
     add_library(madrona_sdl2 INTERFACE)
