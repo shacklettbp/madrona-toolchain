@@ -90,9 +90,7 @@ if (MADRONA_USE_BUNDLED)
         target_include_directories(madrona_vk_hdrs
             INTERFACE "${DEP_ROOT}/vk_sdk/include"
         )
-    endif()
 
-    if (MADRONA_LINUX OR MADRONA_WINDOWS)
         find_library(vk_loader_loc vulkan
             PATHS "${DEP_ROOT}/vk_sdk/lib"
             REQUIRED
