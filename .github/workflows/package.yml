@@ -10,7 +10,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-latest]
+        os: [ubuntu-22.04, macOS-12]
 
     steps:
     - if: matrix.os == 'ubuntu-22.04'
@@ -58,11 +58,11 @@ jobs:
     - name: Download MacOS Artifact
       uses: actions/download-artifact@v3
       with:
-        name: ${{ env.PACKAGE_PREFIX }}-macos-latest
+        name: ${{ env.PACKAGE_PREFIX }}-macOS-12
     - name: Compute Tarball Hashes
       run: |
         echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-22.04.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
-        echo "set(MADRONA_DEPS_MACOS_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
+        echo "set(MADRONA_DEPS_MACOS_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macOS-12.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
     - name: Commit and Push
       run: |
         git add cmake/current-hashes.cmake
@@ -97,7 +97,7 @@ jobs:
           const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-22.04.tar.zst";
           const linux_dst = "madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst";
 
-          const mac_src = "${{ env.PACKAGE_PREFIX }}-macos-latest.tar.zst";
+          const mac_src = "${{ env.PACKAGE_PREFIX }}-macOS-12.tar.zst";
           const mac_dst = "madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst";
 
           const variants = [[linux_src, linux_dst], [mac_src, mac_dst]];
