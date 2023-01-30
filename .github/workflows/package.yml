@@ -52,11 +52,11 @@ jobs:
     - name: Compute Initial Package Prefix
       run: echo "PACKAGE_PREFIX=madrona-deps-`git rev-parse --short HEAD`" >> $GITHUB_ENV
     - name: Download Ubuntu Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ env.PACKAGE_PREFIX }}-ubuntu-22.04
     - name: Download MacOS Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ env.PACKAGE_PREFIX }}-macos-latest
     - name: Compute Tarball Hashes
@@ -73,7 +73,7 @@ jobs:
         echo "SHORT_HASH=`git rev-parse --short HEAD`" >> $GITHUB_ENV
         echo "FULL_HASH=`git rev-parse HEAD`" >> $GITHUB_ENV
     - name: Create Release
-      uses: actions/github-script@v5
+      uses: actions/github-script@v6
       with: 
         script: |
           const fs = require("fs");

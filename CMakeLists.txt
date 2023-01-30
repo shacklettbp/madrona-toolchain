@@ -122,6 +122,11 @@ if (MADRONA_USE_BUNDLED)
             NO_DEFAULT_PATH
         )
         set(MADRONA_SPIRV_CROSS_INCLUDE_DIR "${DEP_ROOT}/spirv_cross/include")
+
+        add_library(madrona_metal_cpp INTERFACE)
+        target_include_directories(madrona_metal_cpp
+            INTERFACE "${DEP_ROOT}/metal-cpp/include"
+        )
     endif ()
     
 else()
@@ -156,6 +161,15 @@ else()
             HINTS "$ENV{VULKAN_SDK}/lib")
         find_path(MADRONA_SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp REQUIRED
             HINTS "$ENV{VULKAN_SDK}/include")
+
+        if (NOT DEFINED MADRONA_METAL_CPP_DIR)
+            message(FATAL_ERROR "Must define MADRONA_METAL_CPP_DIR on Mac when not using bundled dependencies")
+        endif()
+
+        add_library(madrona_metal_cpp INTERFACE)
+        target_include_directories(madrona_metal_cpp INTERFACE
+            ${MADRONA_METAL_CPP_DIR}
+        )
     endif()
 endif()
 
