@@ -146,6 +146,16 @@ if (MADRONA_LINUX OR MADRONA_WINDOWS)
         DESTINATION vk_sdk/lib
     )
 
+    file(GLOB vk_layer_libs ${VULKAN_SDK_ROOT}/lib/libVkLayer*)
+
+    install(FILES ${vk_layer_libs}
+        DESTINATION vk_sdk/layers/lib/
+    )
+
+    install(DIRECTORY ${VULKAN_SDK_ROOT}/etc/vulkan/explicit_layer.d
+        DESTINATION vk_sdk/layers/
+    )
+
     install(DIRECTORY ${VULKAN_SDK_ROOT}/include/spirv-tools
         DESTINATION spirv_tools/include/
     )
@@ -177,4 +187,25 @@ if (MADRONA_MACOS)
     install(FILES ${spirv_cross_libs}
         DESTINATION spirv_cross/lib
     )
+
+    FetchContent_Declare(metal-cpp
+        URL "https://developer.apple.com/metal/cpp/files/metal-cpp_macOS13_iOS16.zip"
+        URL_HASH SHA256=6f741894229e9c750add1afc3797274fc008c7507e2ae726370c17c34b7c6a68
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(metal-cpp)
+
+    install(DIRECTORY ${metal-cpp_SOURCE_DIR}/Foundation
+        DESTINATION metal-cpp/include
+    )
+    install(DIRECTORY ${metal-cpp_SOURCE_DIR}/Metal
+        DESTINATION metal-cpp/include
+    )
+    install(DIRECTORY ${metal-cpp_SOURCE_DIR}/QuartzCore
+        DESTINATION metal-cpp/include
+    )
+    install(FILES ${metal-cpp_SOURCE_DIR}/LICENSE.txt
+        DESTINATION metal-cpp
+    )
+
 endif ()

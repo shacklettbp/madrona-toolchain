@@ -53,6 +53,26 @@ if (MADRONA_USE_BUNDLED)
 
     set(DEP_ROOT ${madronaprecompileddeps_SOURCE_DIR})
 
+    add_library(madrona_libcxx INTERFACE)
+    if (MADRONA_MACOS OR MADRONA_LINUX)
+        target_compile_options(madrona_libcxx INTERFACE
+            -nostdinc++ -nostdlib++
+        )
+        target_include_directories(madrona_libcxx SYSTEM INTERFACE
+            ${DEP_ROOT}/libcxx/include/c++/v1
+        )
+
+        find_library(MADRONA_BUNDLED_LIBCXX c++
+            PATHS "${DEP_ROOT}/libcxx/lib"
+            REQUIRED
+            NO_DEFAULT_PATH
+        )
+
+        target_link_libraries(madrona_libcxx INTERFACE
+            ${MADRONA_BUNDLED_LIBCXX}
+        )
+    endif()
+
     if (MADRONA_LINUX)
         find_package(SDL2
             PATHS "${DEP_ROOT}/SDL"
@@ -69,7 +89,7 @@ if (MADRONA_USE_BUNDLED)
         )
     endif()
 
-    if (MADRONA_LINUX)
+    if (MADRONA_LINUX OR MADRONA_WINDOWS)
         find_library(vk_loader_loc vulkan
             PATHS "${DEP_ROOT}/vk_sdk/lib"
             REQUIRED
@@ -78,6 +98,11 @@ if (MADRONA_USE_BUNDLED)
         
         add_library(madrona_vk_loader SHARED IMPORTED)
         set_target_properties(madrona_vk_loader PROPERTIES IMPORTED_LOCATION "${vk_loader_loc}")
+
+        add_library(madrona_vk_layers INTERFACE)
+        target_compile_definitions(madrona_vk_layers INTERFACE
+            "-DMADRONA_VK_LAYERS_DIR=${DEP_ROOT}/vk_sdk/layers"
+        )
     endif()
     
     find_library(MADRONA_DXC_LIB dxcompiler
@@ -87,14 +112,18 @@ if (MADRONA_USE_BUNDLED)
     )
     set(MADRONA_DXC_INCLUDE_DIR "${DEP_ROOT}/dxc/include")
     
-    find_library(MADRONA_SPIRV_CROSS_LIB spirv-cross-c-shared
-        PATHS "${DEP_ROOT}/spirv_cross/lib"
-        REQUIRED
-        NO_DEFAULT_PATH
-    )
-    set(MADRONA_SPIRV_CROSS_INCLUDE_DIR "${DEP_ROOT}/spirv_cross/include")
+    if (MADRONA_MACOS OR MADRONA_IOS)
+        find_library(MADRONA_SPIRV_CROSS_LIB spirv-cross-c-shared
+            PATHS "${DEP_ROOT}/spirv_cross/lib"
+            REQUIRED
+            NO_DEFAULT_PATH
+        )
+        set(MADRONA_SPIRV_CROSS_INCLUDE_DIR "${DEP_ROOT}/spirv_cross/include")
+    endif ()
     
 else()
+    add_library(madrona_libcxx INTERFACE)
+
     if (MADRONA_LINUX)
         find_package(SDL2 REQUIRED)
     endif()
@@ -119,10 +148,12 @@ else()
     find_path(MADRONA_DXC_INCLUDE_DIR dxc/dxcapi.h REQUIRED
         HINTS "$ENV{VULKAN_SDK}/include")
 
-    find_library(MADRONA_SPIRV_CROSS_LIB spirv-cross-c-shared REQUIRED
-        HINTS "$ENV{VULKAN_SDK}/lib")
-    find_path(MADRONA_SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp REQUIRED
-        HINTS "$ENV{VULKAN_SDK}/include")
+    if (MADRONA_MACOS OR MADRONA_IOS)
+        find_library(MADRONA_SPIRV_CROSS_LIB spirv-cross-c-shared REQUIRED
+            HINTS "$ENV{VULKAN_SDK}/lib")
+        find_path(MADRONA_SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp REQUIRED
+            HINTS "$ENV{VULKAN_SDK}/include")
+    endif()
 endif()
 
 if (MADRONA_LINUX)
