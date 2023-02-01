@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(VERSION 3.18)
 set(NAME madrona-deps-compile)
+
+if (MADRONA_MACOS)
+    set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
+endif()
+
 project(${NAME})
 
 include(FetchContent)
@@ -13,19 +18,48 @@ include(${PARENT_DIR}/cmake/sys-detect.cmake)
 
 include(versions.cmake)
 
-if (MADRONA_MACOS)
-    set(CMAKE_OSX_ARCHITECTURES arm64;x86_64)
-endif()
-
-set (LLVM_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/llvm")
-set (LLVM_INSTALL "${LLVM_PREFIX}/install")
-
-list(APPEND LLVM_ARGS
+list(APPEND LLVM_COMMON_ARGS
     "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
     "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
-    "-DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL}"
+    # Need to explicitly force fPIC on. The LLVM release scripts also do
+    # this, otherwise we cannot link statically to our libc++.
+    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
     "-DCMAKE_BUILD_TYPE=Release"
-    "-DLIBCXX_ENABLE_STATIC=OFF"
+)
+
+set(LLVM_C_FLAGS "")
+set(LLVM_CXX_FLAGS "")
+
+if (MADRONA_X64)
+    set(LLVM_C_FLAGS "${LLVM_C_FLAGS} -march=x86-64-v3")
+    set(LLVM_CXX_FLAGS "${LLVM_CXX_FLAGS} -march=x86-64-v3")
+endif()
+
+if (MADRONA_MACOS)
+    list(APPEND LLVM_COMMON_ARGS
+        "-DCMAKE_OSX_ARCHITECTURES=arm64$<SEMICOLON>x86_64"
+    )
+endif()
+
+FetchContent_Declare(llvm_project
+    URL https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz
+    URL_HASH SHA256=8b5fcb24b4128cf04df1b0b9410ce8b1a729cb3c544e6da885d234280dedeac6
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+)
+FetchContent_MakeAvailable(llvm_project)
+
+set(LIBCXX_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx")
+set(LIBCXX_BUILD "${LIBCXX_PREFIX}/build")
+set(LIBCXX_INSTALL "${LIBCXX_PREFIX}/install")
+
+list(APPEND LLVM_LIBCXX_ARGS
+    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS}"
+    "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS}"
+    "-DCMAKE_INSTALL_PREFIX=${LIBCXX_INSTALL}"
+    "-DLIBCXX_ENABLE_SHARED=ON"
+    "-DLIBCXX_ENABLE_STATIC=ON"
     "-DLIBCXX_CXX_ABI=libcxxabi"
     "-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON"
     "-DLIBCXX_ENABLE_EXCEPTIONS=OFF"
@@ -35,7 +69,9 @@ list(APPEND LLVM_ARGS
     "-DLIBCXX_INCLUDE_BENCHMARKS=OFF"
     "-DLIBCXX_ABI_NAMESPACE=__mad1"
     "-DLIBCXX_USE_COMPILER_RT=ON"
-    "-DLIBCXX_HAS_ATOMIC_LIB=OFF" # This is an internal option but seems to work fine
+    # This is an internal option but seems to work fine. madrona links against
+    # this libcxx using -rtlib=compiler-rt so there is no need for libatomic
+    "-DLIBCXX_HAS_ATOMIC_LIB=OFF" 
     "-DLIBCXXABI_ENABLE_EXCEPTIONS=OFF"
     "-DLIBCXXABI_ENABLE_SHARED=OFF"
     "-DLIBCXXABI_ENABLE_ASSERTIONS=OFF"
@@ -48,37 +84,81 @@ list(APPEND LLVM_ARGS
     "-DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi$<SEMICOLON>libunwind"
 )
 
-if (MADRONA_MACOS)
-    list(APPEND LLVM_ARGS
-        "-DCMAKE_OSX_ARCHITECTURES=arm64$<SEMICOLON>x86_64"
-    )
-endif()
-
-ExternalProject_Add(llvm
-    URL https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz
-    URL_HASH SHA256=8b5fcb24b4128cf04df1b0b9410ce8b1a729cb3c544e6da885d234280dedeac6
-    PREFIX "${LLVM_PREFIX}"
-    INSTALL_DIR "${LLVM_INSTALL}"
-    CMAKE_ARGS ${LLVM_ARGS}
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+ExternalProject_Add(libcxx
+    SOURCE_DIR "${llvm_project_SOURCE_DIR}"
+    PREFIX "${LIBCXX_PREFIX}"
+    BINARY_DIR "${LIBCXX_BUILD}"
+    INSTALL_DIR "${LIBCXX_INSTALL}"
+    CMAKE_ARGS
+        ${LLVM_COMMON_ARGS}
+        ${LLVM_LIBCXX_ARGS}
     SOURCE_SUBDIR runtimes
-    BUILD_COMMAND ${CMAKE_COMMAND} --build ${LLVM_PREFIX}/src/llvm-build --target cxx --target cxxabi --target unwind
+    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxxabi --target unwind
 )
 
-install(DIRECTORY ${LLVM_INSTALL}/include/c++
+install(DIRECTORY ${LIBCXX_INSTALL}/include/c++
     DESTINATION libcxx/include/
 )
 
-install(DIRECTORY ${LLVM_INSTALL}/lib/
+install(DIRECTORY ${LIBCXX_INSTALL}/lib/
     DESTINATION libcxx/lib
     FILES_MATCHING
         PATTERN *
         PATTERN *abi* EXCLUDE
         PATTERN *experimental* EXCLUDE
         PATTERN *unwind* EXCLUDE
+        PATTERN *.a EXCLUDE
 )
 
-if (MADRONA_LINUX)
+set(LLVM_TOOLCHAIN_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/toolchain")
+set(LLVM_TOOLCHAIN_BUILD "${LLVM_TOOLCHAIN_PREFIX}/build")
+set(LLVM_TOOLCHAIN_INSTALL "${LLVM_TOOLCHAIN_PREFIX}/install")
+
+set(LLVM_TOOLCHAIN_CXX_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -nostdinc++ -isystem ${LIBCXX_INSTALL}/include/c++/v1")
+set(LLVM_TOOLCHAIN_LINKER_FLAGS "-fno-exceptions -rtlib=compiler-rt -L ${LIBCXX_INSTALL}/lib")
+
+list(APPEND LLVM_TOOLCHAIN_ARGS
+    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS}"
+    "-DCMAKE_CXX_FLAGS=${LLVM_TOOLCHAIN_CXX_FLAGS}"
+    "-DCMAKE_EXE_LINKER_FLAGS=${LLVM_TOOLCHAIN_LINKER_FLAGS}"
+    "-DCMAKE_SHARED_LINKER_FLAGS=${LLVM_TOOLCHAIN_LINKER_FLAGS}"
+    "-DCMAKE_MODULE_LINKER_FLAGS=${LLVM_TOOLCHAIN_LINKER_FLAGS}"
+    "-DCMAKE_INSTALL_PREFIX=${LLVM_TOOLCHAIN_INSTALL}"
+    "-DLLVM_ENABLE_PROJECTS=clang$<SEMICOLON>lld"
+    "-DCLANG_DEFAULT_CXX_STDLIB=libc++"
+    "-DCLANG_DEFAULT_LINKER=lld"
+    "-DCLANG_DEFAULT_RTLIB=compiler-rt"
+    "-DCLANG_ENABLE_ARCMT=OFF"
+    "-DCLANG_INCLUDE_DOCS=OFF"
+    "-DCLANG_INCLUDE_TESTS=OFF"
+    "-DLLVM_BUILD_RUNTIME=OFF"
+    "-DLLVM_BUILD_RUNTIMES=OFF"
+    "-DLLVM_BUILD_TOOLS=OFF"
+    "-DLLVM_BUILD_UTILS=OFF"
+    "-DLLVM_ENABLE_Z3_SOLVER=OFF"
+    "-DLLVM_INCLUDE_BENCHMARKS=OFF"
+    "-DLLVM_INCLUDE_DOCS=OFF"
+    "-DLLVM_INCLUDE_EXAMPLES=OFF"
+    "-DLLVM_STATIC_LINK_CXX_STDLIB=ON"
+    "-DLLVM_TARGETS_TO_BUILD=AArch64$<SEMICOLON>X86"
+    #"-DLLVM_USE_STATIC_ZSTD=ON"
+    "-DLLVM_ENABLE_LIBCXX=ON"
+)
+
+ExternalProject_Add(llvm_toolchain
+    DEPENDS libcxx
+    SOURCE_DIR "${llvm_project_SOURCE_DIR}"
+    PREFIX "${LLVM_TOOLCHAIN_PREFIX}"
+    BINARY_DIR "${LLVM_TOOLCHAIN_BUILD}"
+    INSTALL_DIR "${LLVM_TOOLCHAIN_INSTALL}"
+    CMAKE_ARGS
+        ${LLVM_COMMON_ARGS}
+        ${LLVM_TOOLCHAIN_ARGS}
+    SOURCE_SUBDIR llvm
+)
+
+#if (MADRONA_LINUX)
+if (OFF)
     set (SDL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/SDL")
     set (SDL_INSTALL "${SDL_PREFIX}/install")
     

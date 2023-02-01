@@ -59,7 +59,7 @@ if (MADRONA_USE_BUNDLED)
             -nostdinc++ -nostdlib++
         )
         target_link_options(madrona_libcxx INTERFACE
-            -nostdlib++
+            -nostdlib++ -rtlib=compiler-rt
         )
         target_include_directories(madrona_libcxx SYSTEM INTERFACE
             $<BUILD_INTERFACE:${DEP_ROOT}/libcxx/include/c++/v1>
