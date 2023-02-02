@@ -1,32 +1,32 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(VERSION 3.18)
 
-set(NAME madrona-deps)
+set(NAME madrona-toolchain)
 project(${NAME})
 
 include(FetchContent)
 include(cmake/sys-detect.cmake)
 include(cmake/current-hashes.cmake)
 
-option(MADRONA_USE_BUNDLED "Use prebuilt dependency binaries" ON)
+option(MADRONA_USE_TOOLCHAIN "Use prebuilt toolchain binaries" ON)
 
 find_package(Git QUIET)
 
-if (NOT DEFINED MADRONA_DEPS_VERSION)
-    if (NOT Git_FOUND)
-        message(FATAL_ERROR "Git not found, you must set explicit madrona-deps version to use (the short hash)")
+if (MADRONA_USE_BUNDLED)
+    if (NOT DEFINED MADRONA_TOOLCHAIN_VERSION)
+        if (NOT Git_FOUND)
+            message(FATAL_ERROR "Git not found, you must set explicit madrona-toolchain version to use (the short hash)")
+        endif()
+    
+        execute_process(
+            COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            OUTPUT_VARIABLE MADRONA_TOOLCHAIN_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            COMMAND_ERROR_IS_FATAL ANY
+        )
     endif()
 
-    execute_process(
-        COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        OUTPUT_VARIABLE MADRONA_DEPS_VERSION
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        COMMAND_ERROR_IS_FATAL ANY
-    )
-endif()
-
-if (MADRONA_USE_BUNDLED)
     if (MADRONA_LINUX)
         set(DEPS_OS_NAME "linux")
         if (NOT DEFINED MADRONA_DEPS_HASH)

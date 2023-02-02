@@ -10,22 +10,23 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-22.04, macOS-12]
+        os: [ubuntu-18.04, macOS-12]
 
     steps:
-    - if: matrix.os == 'ubuntu-22.04'
+    - if: matrix.os == 'ubuntu-18.04'
       name: Install dependencies
       run: |
         wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-        sudo add-apt-repository -y "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
-        sudo add-apt-repository -y "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-15 main"
+        sudo add-apt-repository -y "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-15 main"
+        sudo add-apt-repository -y "deb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-15 main"
         sudo apt-get update -y
         sudo apt-get install -y clang-15
+        sudo apt-get install -y ninja
         echo "CC=clang-15" >> $GITHUB_ENV
         echo "CXX=clang++-15" >> $GITHUB_ENV
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set Package Name
-      run: echo "PACKAGE_NAME=madrona-deps-`git rev-parse --short HEAD`-${{ matrix.os }}" >> $GITHUB_ENV
+      run: echo "PACKAGE_NAME=madrona-toolchain-`git rev-parse --short HEAD`-${{ matrix.os }}" >> $GITHUB_ENV
     - name: Make build dir
       run: mkdir build
     - name: CMake Config
@@ -45,24 +46,24 @@ jobs:
         retention-days: 0
 
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-18.04
     needs: build
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Compute Initial Package Prefix
-      run: echo "PACKAGE_PREFIX=madrona-deps-`git rev-parse --short HEAD`" >> $GITHUB_ENV
+      run: echo "PACKAGE_PREFIX=madrona-toolchain-`git rev-parse --short HEAD`" >> $GITHUB_ENV
     - name: Download Ubuntu Artifact
       uses: actions/download-artifact@v3
       with:
-        name: ${{ env.PACKAGE_PREFIX }}-ubuntu-22.04
+        name: ${{ env.PACKAGE_PREFIX }}-ubuntu-18.04
     - name: Download MacOS Artifact
       uses: actions/download-artifact@v3
       with:
         name: ${{ env.PACKAGE_PREFIX }}-macOS-12
     - name: Compute Tarball Hashes
       run: |
-        echo "set(MADRONA_DEPS_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-22.04.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
-        echo "set(MADRONA_DEPS_MACOS_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macOS-12.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
+        echo "set(MADRONA_TOOLCHAIN_LINUX_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX}}-ubuntu-18.04.tar.zst | cut -d' ' -f1)\")" > cmake/current-hashes.cmake
+        echo "set(MADRONA_TOOLCHAIN_MACOS_HASH \"$(sha256sum ${{ env.PACKAGE_PREFIX }}-macOS-12.tar.zst | cut -d' ' -f1)\")" >> cmake/current-hashes.cmake
     - name: Commit and Push
       run: |
         git add cmake/current-hashes.cmake
@@ -94,11 +95,11 @@ jobs:
             draft: true,
           });
 
-          const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-22.04.tar.zst";
-          const linux_dst = "madrona-deps-${{ env.SHORT_HASH }}-linux.tar.zst";
+          const linux_src = "${{ env.PACKAGE_PREFIX }}-ubuntu-18.04.tar.zst";
+          const linux_dst = "madrona-toolchain-${{ env.SHORT_HASH }}-linux.tar.zst";
 
           const mac_src = "${{ env.PACKAGE_PREFIX }}-macOS-12.tar.zst";
-          const mac_dst = "madrona-deps-${{ env.SHORT_HASH }}-mac.tar.zst";
+          const mac_dst = "madrona-toolchain-${{ env.SHORT_HASH }}-mac.tar.zst";
 
           const variants = [[linux_src, linux_dst], [mac_src, mac_dst]];
           let promises = [];
