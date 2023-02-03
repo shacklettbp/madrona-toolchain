@@ -49,6 +49,8 @@ set(LLVM_TOOLCHAIN_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/toolchain")
 set(LLVM_TOOLCHAIN_BUILD "${LLVM_TOOLCHAIN_PREFIX}/build")
 set(LLVM_TOOLCHAIN_INSTALL "${LLVM_TOOLCHAIN_PREFIX}/install")
 
+# libcxx is built without exception & rtti support, so these flags are
+# required during stage2 otherwise the stage2 binaries will fail to link
 set(LLVM_STAGE2_CXX_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -fno-rtti")
 set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -fno-rtti")
 
@@ -68,11 +70,16 @@ list(APPEND LLVM_TOOLCHAIN_ARGS
 )
 
 if (MADRONA_X64 AND MADRONA_LINUX)
+    # Force to pc-linux as oppposed to unknown-linux
     LIST(APPEND LLVM_TOOLCHAIN_ARGS 
         "-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-pc-linux-gnu"
     )
 endif()
 
+# There seems to be a race condition in the clang bootstrap process due to
+# improper dependencies in LLVM's internal use of ExternalProject_Add. 
+# Forcing the generator to Ninja  fixes it because Ninja can't work on
+# multiple ExternalProjects in parallel
 ExternalProject_Add(llvm_toolchain
     SOURCE_DIR "${llvm_project_SOURCE_DIR}"
     PREFIX "${LLVM_TOOLCHAIN_PREFIX}"
