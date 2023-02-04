@@ -4,6 +4,8 @@ set(LLVM_TARGETS_TO_BUILD "AArch64;X86" CACHE STRING "")
 set(LLVM_STATIC_LINK_CXX_STDLIB ON CACHE BOOL "") # Binary size increase?
 
 set(LLVM_INSTALL_TOOLCHAIN_ONLY ON CACHE BOOL "")
+set(LLVM_CREATE_XCODE_TOOLCHAIN ON CACHE BOOL "")
+
 set(LLVM_TOOLCHAIN_TOOLS
     dsymutil
     llvm-ar
@@ -17,6 +19,9 @@ set(LLVM_TOOLCHAIN_TOOLS
     llvm-ranlib
     llvm-config
     llvm-dwarfdump
+    llvm-profdata
+    llvm-objdump
+    llvm-cov
 
     CACHE STRING ""
 )

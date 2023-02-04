@@ -2,6 +2,10 @@
 # this, otherwise we cannot link statically to our libc++.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON BOOL "")
 
+if (APPLE)
+    set(DEFAULT_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/" CACHE STRING "")
+endif()
+
 set(LLVM_ENABLE_PROJECTS "llvm;clang;clang-tools-extra;lld" CACHE STRING "")
 set(LLVM_ENABLE_RUNTIMES "compiler-rt;libcxx;libcxxabi;libunwind" CACHE STRING "")
 
@@ -16,6 +20,7 @@ set(LLVM_INCLUDE_BENCHMARKS OFF CACHE BOOL "")
 set(LLVM_BUILD_EXAMPLES OFF CACHE BOOL "")
 set(LLVM_BUILD_DOCS OFF CACHE BOOL "")
 set(LLVM_BUILD_BENCHMARKS OFF CACHE BOOL "")
+set(LLVM_INSTALL_CCTOOLS_SYMLINKS ON CACHE BOOL "")
 
 set(CLANG_TOOL_SCAN_BUILD_BUILD OFF CACHE BOOL "")
 set(CLANG_TOOL_SCAN_VIEW_BUILD OFF CACHE BOOL "")
@@ -53,7 +58,13 @@ set(LIBCXXABI_INSTALL_LIBRARY OFF CACHE BOOL "")
 
 set(LIBUNWIND_ENABLE_SHARED OFF CACHE BOOL "")
 set(LIBUNWIND_USE_COMPILER_RT ON CACHE BOOL "")
-set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
+
+if (APPLE)
+    set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
+else()
+    # On linux, the unwind library seems to be linked unconditionally
+    set(LIBUNWIND_INSTALL_LIBRARY ON CACHE BOOL "")
+endif()
 
 set(COMPILER_RT_USE_LLVM_UNWINDER ON CACHE BOOL "")
 set(COMPILER_RT_ENABLE_STATIC_UNWINDER ON CACHE BOOL "")
