@@ -41,6 +41,23 @@ ExternalProject_Add(zstd
     SOURCE_SUBDIR build/cmake
 )
 
+set(ZLIB_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/zlib")
+set(ZLIB_INSTALL "${ZLIB_PREFIX}/install")
+
+ExternalProject_Add(zlib
+    URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.xz"
+    URL_HASH SHA256=${ZLIB_HASH}
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    PREFIX "${ZLIB_PREFIX}"
+    INSTALL_DIR "${ZLIB_INSTALL}"
+    CMAKE_ARGS
+        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+        "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+        "-DCMAKE_INSTALL_PREFIX=${ZLIB_INSTALL}"
+        "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+)
+
 list(APPEND LLVM_COMMON_ARGS
     "-DCMAKE_BUILD_TYPE=Release"
 )
@@ -75,10 +92,14 @@ if (APPLE)
     # On Darwin, the custom libc++'s path isn't in the default search path, but
     # headers are. This results in a weird situation with the custom libc++ ABI
     # namespace where the stage1 compiler is broken due to building libraries
-    # with the custom headers but linking system libc++. The search path is
-    # hardcoded for the linker here so the stage2 build succeeds.
-    # Known LLVM bug: https://reviews.llvm.org/D45639
-    set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_STAGE2_LINKER_FLAGS} -L${LLVM_TOOLCHAIN_BUILD}/lib")
+    # with the custom headers but linking system libc++. This combines with the
+    # fact that clang doesn't set rpath to a custom libc++ location by default
+    # and the Darwin clang driver not supporting -static-libstdc++, resulting
+    # in none of the stage2 binaries working even with the correct linking
+    # path. For now, disabling the standard libc++ link and manually passing in
+    # the static library works. Known LLVM bug for the header / search path
+    # mismatch on Darwin: https://reviews.llvm.org/D45639
+    set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_STAGE2_LINKER_FLAGS} -nostdlib++ ${LLVM_TOOLCHAIN_BUILD}/lib/libc++.a")
 endif()
 
 list(APPEND LLVM_TOOLCHAIN_ARGS
@@ -90,34 +111,66 @@ list(APPEND LLVM_TOOLCHAIN_ARGS
     "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
     "-Dzstd_INCLUDE_DIR=${ZSTD_INSTALL}/include"
     "-Dzstd_LIBRARY=${ZSTD_INSTALL}/lib/libzstd.a"
+    "-DZLIB_ROOT=${ZLIB_INSTALL}"
+    "-DZLIB_USE_STATIC_LIBS=ON"
     "-DBOOTSTRAP_CMAKE_C_FLAGS=${LLVM_C_FLAGS}"
     "-DBOOTSTRAP_CMAKE_CXX_FLAGS=${LLVM_STAGE2_CXX_FLAGS}"
     "-DBOOTSTRAP_CMAKE_EXE_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
     "-DBOOTSTRAP_CMAKE_SHARED_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
     "-DBOOTSTRAP_CMAKE_MODULE_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
     "-DBOOTSTRAP_CMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
-    "-DBOOTSTRAP_zstd_INCLUDE_DIR=${ZSTD_INSTALL}/include"
-    "-DBOOTSTRAP_zstd_LIBRARY=${ZSTD_INSTALL}/lib/libzstd.a"
     "-C ${CMAKE_CURRENT_LIST_DIR}/llvm-stage1.cmake"
 )
 
-set(LLVM_INSTALL_TARGETS stage2-install-distribution-stripped )
-
 if (MADRONA_X64 AND MADRONA_LINUX)
-    # Force to pc-linux as oppposed to unknown-linux
+    # Force to pc-linux as opposed to unknown-linux
     LIST(APPEND LLVM_TOOLCHAIN_ARGS 
         "-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-pc-linux-gnu"
     )
-
-    set(LLVM_INSTALL_TARGETS "${LLVM_INSTALL_TARGETS} stage2-install-xcode-toolchain")
 endif()
+
+if (APPLE)
+    list(APPEND LLVM_INSTALL_TARGETS 
+        stage2-install-xcode-toolchain
+    )
+
+    # Clang bootstrap builds on darwin are written to assume that tools like
+    # libtool are the system version. To avoid LLVM bitcode incompatibilities
+    # that confuse the system cc tools, we want to make sure that the bootstrap
+    # uses the new LLVM lipo & libtool. Unfortunately, this runs into issues
+    # with the clang bootstrap tooling hardcoding DYLD_LIBRARY_PATH (assuming
+    # the system tools are in use), breaking the stage 1 compiled libtool due
+    # to linkage against the wrong libc++. This script is a fake libtool that
+    # unsets DYLD_LIBRARY_PATH to avoid these issues
+    set(LIBTOOL_HACK_PATH "${LLVM_TOOLCHAIN_BUILD}/bin/libtool")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/apple_libtool_hack.sh.in"
+        "${LLVM_TOOLCHAIN_BUILD}/apple_libtool_hack.sh"
+        @ONLY
+    )
+
+    list(APPEND LLVM_TOOLCHAIN_ARGS
+        "-DBOOTSTRAP_CMAKE_LIBTOOL=${LLVM_TOOLCHAIN_BUILD}/apple_libtool_hack.sh"
+    )
+else()
+    # On non-apple, we can do a normal static link against our new libc++ 
+    # in the bootstrap build. This is handled with custom linker flags above
+    # for mac builds.
+    list(APPEND LLVM_TOOLCHAIN_ARGS
+        "-DBOOTSTRAP_LLVM_STATIC_LINK_CXX_STDLIB=ON"
+    )
+endif()
+
+list(APPEND LLVM_INSTALL_TARGETS
+    stage2-install-distribution-toolchain
+)
 
 # There seems to be a race condition in the clang bootstrap process due to
 # improper dependencies in LLVM's internal use of ExternalProject_Add. 
 # Forcing the generator to Ninja  fixes it because Ninja can't work on
 # multiple ExternalProjects in parallel
 ExternalProject_Add(llvm_toolchain
-    DEPENDS zstd
+    DEPENDS zstd zlib
     SOURCE_DIR "${llvm_project_SOURCE_DIR}"
     PREFIX "${LLVM_TOOLCHAIN_PREFIX}"
     BINARY_DIR "${LLVM_TOOLCHAIN_BUILD}"
@@ -130,7 +183,7 @@ ExternalProject_Add(llvm_toolchain
     BUILD_COMMAND
         ninja -C "${LLVM_TOOLCHAIN_BUILD}" stage2-distribution
     INSTALL_COMMAND 
-    ninja -C "${LLVM_TOOLCHAIN_BUILD}" ${LLVM_INSTALL_TARGETS}
+        ninja -C "${LLVM_TOOLCHAIN_BUILD}" ${LLVM_INSTALL_TARGETS}
 )
 
 #ExternalProject_Add(libcxx

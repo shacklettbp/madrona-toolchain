@@ -4,6 +4,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON BOOL "")
 
 if (APPLE)
     set(DEFAULT_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/" CACHE STRING "")
+
+    set(RUNTIMES_CMAKE_ARGS "-DCMAKE_OSX_ARCHITECTURES=arm64|x86_64" CACHE STRING "")
+    set(BUILTIN_CMAKE_ARGS "-DCMAKE_OSX_ARCHITECTURES=arm64|x86_64" CACHE STRING "")
 endif()
 
 set(LLVM_ENABLE_PROJECTS "llvm;clang;clang-tools-extra;lld" CACHE STRING "")
