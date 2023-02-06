@@ -67,6 +67,7 @@ ExternalProject_Add(zstd
         "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
         "-DCMAKE_INSTALL_PREFIX=${ZSTD_INSTALL}"
         "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
         "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
         "-DZSTD_BUILD_SHARED=OFF"
         "-DZSTD_BUILD_STATIC=ON"
@@ -89,6 +90,7 @@ ExternalProject_Add(zlib
         "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
         "-DCMAKE_INSTALL_PREFIX=${ZLIB_INSTALL}"
         "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
         "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
 )
 
@@ -166,6 +168,7 @@ endif()
 if (APPLE)
     list(APPEND LLVM_INSTALL_TARGETS 
         stage2-install-xcode-toolchain
+        stage2-install-distribution-toolchain
     )
 
     # Clang bootstrap builds on darwin are written to assume that tools like
@@ -193,11 +196,11 @@ else()
     list(APPEND LLVM_TOOLCHAIN_ARGS
         "-DBOOTSTRAP_LLVM_STATIC_LINK_CXX_STDLIB=ON"
     )
-endif()
 
-list(APPEND LLVM_INSTALL_TARGETS
-    stage2-install-distribution-toolchain
-)
+    list(APPEND LLVM_INSTALL_TARGETS 
+        stage2-install-distribution-stripped
+    )
+endif()
 
 # There seems to be a race condition in the clang bootstrap process due to
 # improper dependencies in LLVM's internal use of ExternalProject_Add. 
@@ -219,6 +222,14 @@ ExternalProject_Add(llvm_toolchain
     INSTALL_COMMAND 
         ninja -C "${LLVM_TOOLCHAIN_BUILD}" ${LLVM_INSTALL_TARGETS}
 )
+
+# FIXME: integrate with libcxx builds below
+#if (APPLE)
+#    set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
+#else()
+#    # On linux, the unwind library seems to be linked unconditionally
+#    set(LIBUNWIND_INSTALL_LIBRARY ON CACHE BOOL "")
+#endif()
 
 #ExternalProject_Add(libcxx
 #    DEPENDS llvm_toolchain

@@ -10,6 +10,8 @@ set(LLVM_DYLIB_COMPONENTS "Core;MC;MCDisassembler;Analysis;Support;Target;BitRea
 
 set(LIBCXX_INSTALL_HEADERS OFF CACHE BOOL "")
 set(LIBCXX_INSTALL_LIBRARY OFF CACHE BOOL "")
+set(LIBCXXABI_INSTALL_HEADERS OFF CACHE BOOL "")
+set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
 
 if (APPLE)
     # macOS universal build fails with LTO due to mixed LLVM IR and MachO
