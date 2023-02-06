@@ -40,10 +40,7 @@ ExternalProject_Add(ncurses
     SOURCE_DIR "${NCURSES_SRC}"
     INSTALL_DIR "${NCURSES_INSTALL}"
     CONFIGURE_COMMAND
-        # --with-shlib-version=rel is necessary on macOS otherwise
-        # --with-termlib=tinfo is broken with --enable-widec due to a bug in
-        # ncurses aclocal.m4 that results in internally inconsistent makefiles
-        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --enable-widec --without-debug --without-cxx-binding --without-ada --prefix=${NCURSES_INSTALL} --with-termlib=tinfo --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo --with-shlib-version=rel
+        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --enable-widec --without-debug --without-cxx-binding --without-ada --prefix=${NCURSES_INSTALL} --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo 
     BUILD_COMMAND
         make
     INSTALL_COMMAND
@@ -54,6 +51,15 @@ ExternalProject_Add(ncurses
         "-DCMAKE_INSTALL_PREFIX=${NCURSES_INSTALL}"
         "-DCMAKE_BUILD_TYPE=Release"
         "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+)
+
+ExternalProject_Add_Step(ncurses copy_tinfo
+    COMMAND 
+        ${CMAKE_COMMAND} -E copy ${NCURSES_INSTALL}/lib/libtinfow.a ${NCURSES_INSTALL}/lib/libtinfo.a
+    DEPENDEES
+        install
+    BYPRODUCTS
+        ${NCURSES_INSTALL}/lib/libtinfo.a
 )
 
 set(ZSTD_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/zstd")
