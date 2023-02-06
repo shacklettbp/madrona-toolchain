@@ -40,7 +40,7 @@ ExternalProject_Add(ncurses
     SOURCE_DIR "${NCURSES_SRC}"
     INSTALL_DIR "${NCURSES_INSTALL}"
     CONFIGURE_COMMAND
-        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --enable-widec --without-debug --without-cxx-binding --without-ada --prefix=${NCURSES_INSTALL} --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo 
+        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --with-termlib --enable-widec --without-debug --without-cxx-binding --without-ada --prefix=${NCURSES_INSTALL} --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo 
     BUILD_COMMAND
         make
     INSTALL_COMMAND
