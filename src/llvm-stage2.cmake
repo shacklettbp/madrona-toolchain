@@ -2,11 +2,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/llvm-common.cmake")
 
 set(LLVM_TARGETS_TO_BUILD "AArch64;X86" CACHE STRING "")
 
-#set(LLVM_INSTALL_TOOLCHAIN_ONLY ON CACHE BOOL "")
+set(LLVM_INSTALL_TOOLCHAIN_ONLY ON CACHE BOOL "")
 set(LLVM_CREATE_XCODE_TOOLCHAIN ON CACHE BOOL "")
-
-set(LLVM_BUILD_LLVM_DYLIB ON CACHE BOOL "")
-set(LLVM_DYLIB_COMPONENTS "Core;MC;MCDisassembler;Analysis;Support;Target;BitReader;BitWriter;Vectorize;ipo;InstCombine;TransformUtils;ScalarOpts;Object" CACHE STRING "")
 
 set(LIBCXX_INSTALL_HEADERS OFF CACHE BOOL "")
 set(LIBCXX_INSTALL_LIBRARY OFF CACHE BOOL "")
@@ -58,8 +55,6 @@ set(LLVM_DISTRIBUTION_COMPONENTS
     builtins
     runtimes
     Remarks
-    LLVM
-    llvm-headers
     ${LLVM_TOOLCHAIN_TOOLS}
 
     CACHE STRING ""
