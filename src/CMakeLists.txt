@@ -229,73 +229,105 @@ ExternalProject_Add(llvm_toolchain
         ninja -C "${LLVM_TOOLCHAIN_BUILD}" ${LLVM_INSTALL_TARGETS}
 )
 
-# FIXME: integrate with libcxx builds below
-#if (APPLE)
-#    set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
-#else()
-#    # On linux, the unwind library seems to be linked unconditionally
-#    set(LIBUNWIND_INSTALL_LIBRARY ON CACHE BOOL "")
-#endif()
+set(LIBCXX_COMMON_ARGS ${LLVM_COMMON_ARGS})
+list(APPEND LIBCXX_COMMON_ARGS
+    -DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    -DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi$<SEMICOLON>libunwind
+    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS} -nostdlib++ -nostdinc++"
+    "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS} -nostdlib++ -nostdinc++"
+    "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++"
+    "-DCMAKE_SHARED_LINKER_FLAGS=-nostdlib++"
+    "-DCMAKE_MODULE_LINKER_FLAGS=-nostdlib++"
+    -C "${CMAKE_CURRENT_LIST_DIR}/libcxx-common.cmake"
+)
 
-set(LIBCXX_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-noexcept")
-set(LIBCXX_BUILD "${LIBCXX_PREFIX}/build")
-set(LIBCXX_INSTALL "${LIBCXX_PREFIX}/install")
+if (APPLE)
+    set(XCTOOLCHAIN_PATH "${LLVM_TOOLCHAIN_INSTALL}/Toolchains/LLVM${LLVM_VERSION}.xctoolchain/usr")
+    list(APPEND LIBCXX_COMMON_ARGS
+        "-DCMAKE_C_COMPILER=${XCTOOLCHAIN_PATH}/bin/clang"
+        "-DCMAKE_CXX_COMPILER=${XCTOOLCHAIN_PATH}/bin/clang++"
+    )
+else()
+    list(APPEND LIBCXX_COMMON_ARGS
+        "-DCMAKE_C_COMPILER=${LLVM_TOOLCHAIN_INSTALL}/bin/clang"
+        "-DCMAKE_CXX_COMPILER=${LLVM_TOOLCHAIN_INSTALL}/bin/clang++"
+)
+endif()
 
-ExternalProject_Add(libcxx
+if (APPLE)
+    list(APPEND LIBCXX_COMMON_ARGS
+        "-DLIBUNWIND_INSTALL_LIBRARY=OFF"
+    )
+else()
+    list(APPEND LIBCXX_COMMON_ARGS
+        # On linux, the unwind library seems to be linked unconditionally
+        "-DLIBUNWIND_INSTALL_LIBRARY=ON"
+    )
+endif()
+
+set(LIBCXX_NOEXCEPT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-noexcept")
+set(LIBCXX_NOEXCEPT_BUILD "${LIBCXX_NOEXCEPT_PREFIX}/build")
+set(LIBCXX_NOEXCEPT_INSTALL "${LIBCXX_NOEXCEPT_PREFIX}/install")
+
+ExternalProject_Add(libcxx-noexcept
     DEPENDS llvm_toolchain
     SOURCE_DIR "${llvm_project_SOURCE_DIR}"
-    PREFIX "${LIBCXX_PREFIX}"
-    BINARY_DIR "${LIBCXX_BUILD}"
-    INSTALL_DIR "${LIBCXX_INSTALL}"
+    PREFIX "${LIBCXX_NOEXCEPT_PREFIX}"
+    BINARY_DIR "${LIBCXX_NOEXCEPT_BUILD}"
+    INSTALL_DIR "${LIBCXX_NOEXCEPT_INSTALL}"
+    CMAKE_GENERATOR Ninja
     CMAKE_ARGS
-        ${LLVM_COMMON_ARGS}
-        ${LLVM_LIBCXX_ARGS}
+        ${LIBCXX_COMMON_ARGS}
+        "-DCMAKE_INSTALL_PREFIX=${LIBCXX_NOEXCEPT_INSTALL}"
+        -DLIBCXX_ABI_NAMESPACE=__mad1
+        -DLIBCXXABI_ENABLE_EXCEPTIONS=OFF
+        -DLIBCXX_ENABLE_EXCEPTIONS=OFF
+        -DLIBCXX_ENABLE_RTTI=OFF
     SOURCE_SUBDIR runtimes
-    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxxabi --target unwind
+    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi --target unwind
 )
-#
-#list(APPEND LLVM_LIBCXX_ARGS
-#    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS}"
-#    "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS}"
-#    "-DCMAKE_INSTALL_PREFIX=${LIBCXX_INSTALL}"
-#    "-DLIBCXX_ENABLE_SHARED=ON"
-#    "-DLIBCXX_ENABLE_STATIC=ON"
-#    "-DLIBCXX_CXX_ABI=libcxxabi"
-#    "-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON"
-#    "-DLIBCXX_ENABLE_EXCEPTIONS=OFF"
-#    "-DLIBCXX_ENABLE_ASSERTIONS=OFF"
-#    "-DLIBCXX_ENABLE_RTTI=OFF"
-#    "-DLIBCXX_INCLUDE_TESTS=OFF"
-#    "-DLIBCXX_INCLUDE_BENCHMARKS=OFF"
-#    "-DLIBCXX_ABI_NAMESPACE=__mad1"
-#    "-DLIBCXX_USE_COMPILER_RT=ON"
-#    # This is an internal option but seems to work fine. madrona links against
-#    # this libcxx using -rtlib=compiler-rt so there is no need for libatomic
-#    "-DLIBCXX_HAS_ATOMIC_LIB=OFF" 
-#    "-DLIBCXXABI_ENABLE_EXCEPTIONS=OFF"
-#    "-DLIBCXXABI_ENABLE_SHARED=OFF"
-#    "-DLIBCXXABI_ENABLE_ASSERTIONS=OFF"
-#    "-DLIBCXXABI_USE_LLVM_UNWINDER=ON"
-#    "-DLIBCXXABI_USE_COMPILER_RT=ON"
-#    "-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON"
-#    "-DLIBUNWIND_ENABLE_ASSERTIONS=OFF"
-#    "-DLIBUNWIND_ENABLE_SHARED=OFF"
-#    "-DLIBUNWIND_USE_COMPILER_RT=ON"
-#    "-DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi$<SEMICOLON>libunwind"
-#)
-#
-#
-#install(DIRECTORY ${LIBCXX_INSTALL}/include/c++
-#    DESTINATION libcxx/include/
-#)
-#
-#install(DIRECTORY ${LIBCXX_INSTALL}/lib/
-#    DESTINATION libcxx/lib
-#    FILES_MATCHING
-#        PATTERN *
-#        PATTERN *abi* EXCLUDE
-#        PATTERN *experimental* EXCLUDE
-#        PATTERN *unwind* EXCLUDE
-#        PATTERN *.a EXCLUDE
-#)
-#
+
+install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/include
+    DESTINATION libcxx-noexcept/
+)
+
+install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/lib
+    DESTINATION libcxx-noexcept/
+    FILES_MATCHING
+        PATTERN *
+        PATTERN *experimental* EXCLUDE
+)
+
+set(LIBCXX_EXCEPT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-except")
+set(LIBCXX_EXCEPT_BUILD "${LIBCXX_EXCEPT_PREFIX}/build")
+set(LIBCXX_EXCEPT_INSTALL "${LIBCXX_EXCEPT_PREFIX}/install")
+
+ExternalProject_Add(libcxx-except
+    DEPENDS llvm_toolchain
+    SOURCE_DIR "${llvm_project_SOURCE_DIR}"
+    PREFIX "${LIBCXX_EXCEPT_PREFIX}"
+    BINARY_DIR "${LIBCXX_EXCEPT_BUILD}"
+    INSTALL_DIR "${LIBCXX_EXCEPT_INSTALL}"
+    CMAKE_GENERATOR Ninja
+    CMAKE_ARGS
+        ${LIBCXX_COMMON_ARGS}
+        "-DCMAKE_INSTALL_PREFIX=${LIBCXX_EXCEPT_INSTALL}"
+        -DLIBCXX_ABI_NAMESPACE=__emad1
+        -DLIBCXXABI_ENABLE_EXCEPTIONS=ON
+        -DLIBCXX_ENABLE_EXCEPTIONS=ON
+        -DLIBCXX_ENABLE_RTTI=ON
+    SOURCE_SUBDIR runtimes
+    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi --target unwind
+)
+
+install(DIRECTORY ${LIBCXX_EXCEPT_INSTALL}/include
+    DESTINATION libcxx-except/
+)
+
+install(DIRECTORY ${LIBCXX_EXCEPT_INSTALL}/lib
+    DESTINATION libcxx-except/
+    FILES_MATCHING
+        PATTERN *
+        PATTERN *experimental* EXCLUDE
+)
