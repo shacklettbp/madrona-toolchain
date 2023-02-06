@@ -40,11 +40,11 @@ ExternalProject_Add(ncurses
     SOURCE_DIR "${NCURSES_SRC}"
     INSTALL_DIR "${NCURSES_INSTALL}"
     CONFIGURE_COMMAND
-        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --with-termlib --enable-widec --without-debug --without-cxx-binding --without-ada --prefix=${NCURSES_INSTALL} --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo 
+        ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --prefix=/usr --with-termlib --enable-widec --without-debug --without-cxx-binding --without-ada
     BUILD_COMMAND
         make
     INSTALL_COMMAND
-        make install
+        make DESTDIR=${NCURSES_INSTALL} install
     CMAKE_ARGS
         "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
         "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
@@ -55,7 +55,7 @@ ExternalProject_Add(ncurses
 
 ExternalProject_Add_Step(ncurses copy_tinfo
     COMMAND 
-        ${CMAKE_COMMAND} -E copy ${NCURSES_INSTALL}/lib/libtinfow.a ${NCURSES_INSTALL}/lib/libtinfo.a
+        ${CMAKE_COMMAND} -E copy ${NCURSES_INSTALL}/usr/lib/libtinfow.a ${NCURSES_INSTALL}/usr/lib/libtinfo.a
     DEPENDEES
         install
     BYPRODUCTS
@@ -153,7 +153,7 @@ list(APPEND LLVM_TOOLCHAIN_ARGS
     "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS}"
     "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS}"
     "-DCMAKE_INSTALL_PREFIX=${LLVM_TOOLCHAIN_INSTALL}"
-    "-DCMAKE_PREFIX_PATH=${NCURSES_INSTALL}$<SEMICOLON>${ZSTD_INSTALL}$<SEMICOLON>${ZLIB_INSTALL}"
+    "-DCMAKE_PREFIX_PATH=${NCURSES_INSTALL}/usr/$<SEMICOLON>${ZSTD_INSTALL}$<SEMICOLON>${ZLIB_INSTALL}"
     "-DZLIB_USE_STATIC_LIBS=ON"
     "-DBOOTSTRAP_CMAKE_C_FLAGS=${LLVM_C_FLAGS}"
     "-DBOOTSTRAP_CMAKE_CXX_FLAGS=${LLVM_STAGE2_CXX_FLAGS}"
