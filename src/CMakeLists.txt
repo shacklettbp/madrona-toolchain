@@ -231,6 +231,7 @@ ExternalProject_Add(llvm_toolchain
 
 install(DIRECTORY ${LLVM_TOOLCHAIN_INSTALL}/
     DESTINATION toolchain/
+    USE_SOURCE_PERMISSIONS
 )
 
 set(LIBCXX_COMMON_ARGS ${LLVM_COMMON_ARGS})
@@ -294,10 +295,12 @@ ExternalProject_Add(libcxx-noexcept
 
 install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/include
     DESTINATION libcxx-noexcept/
+    USE_SOURCE_PERMISSIONS
 )
 
 install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/lib
     DESTINATION libcxx-noexcept/
+    USE_SOURCE_PERMISSIONS
     FILES_MATCHING
         PATTERN *
         PATTERN *experimental* EXCLUDE
@@ -327,10 +330,12 @@ ExternalProject_Add(libcxx-except
 
 install(DIRECTORY ${LIBCXX_EXCEPT_INSTALL}/include
     DESTINATION libcxx-except/
+    USE_SOURCE_PERMISSIONS
 )
 
 install(DIRECTORY ${LIBCXX_EXCEPT_INSTALL}/lib
     DESTINATION libcxx-except/
+    USE_SOURCE_PERMISSIONS
     FILES_MATCHING
         PATTERN *
         PATTERN *experimental* EXCLUDE
