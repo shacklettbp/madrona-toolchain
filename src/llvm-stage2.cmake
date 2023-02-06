@@ -59,6 +59,7 @@ set(LLVM_DISTRIBUTION_COMPONENTS
     runtimes
     Remarks
     LLVM
+    llvm-headers
     ${LLVM_TOOLCHAIN_TOOLS}
 
     CACHE STRING ""

@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(VERSION 3.18)
 get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
-include(${PARENT_DIR}/cmake/sys-detect.cmake)
-
 set(NAME madrona-toolchain-compile)
 
-if (MADRONA_MACOS)
+if (APPLE)
     set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64")
     list(JOIN CMAKE_OSX_ARCHITECTURES "$<SEMICOLON>" EXT_OSX_ARCHITECTURES)
 endif()
 
 project(${NAME})
+
+include(${PARENT_DIR}/cmake/sys-detect.cmake)
 
 include(FetchContent)
 include(ExternalProject)
@@ -23,13 +23,13 @@ set(NCURSES_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/ncurses")
 set(NCURSES_SRC "${NCURSES_PREFIX}/sources")
 set(NCURSES_INSTALL "${NCURSES_PREFIX}/install")
 
-set(OSX_NCURSES_ARCH_CFLAGS)
-set(OSX_NCURSES_ARCH_CXXFLAGS)
-set(OSX_NCURSES_ARCH_CPPFLAGS)
+set(NCURSES_CFLAGS "-O3 -fPIC")
+set(NCURSES_CXXFLAGS "-O3 -fPIC")
+set(NCURSES_CPPFLAGS)
 if (APPLE)
-    set(OSX_NCURSES_ARCH_CFLAGS "-arch arm64 -arch x86_64 -isysroot${CMAKE_OSX_SYSROOT}")
-    set(OSX_NCURSES_ARCH_CXXFLAGS "-arch arm64 -arch x86_64 -isysroot${CMAKE_OSX_SYSROOT}")
-    set(OSX_NCURSES_ARCH_CPPFLAGS "-isysroot${CMAKE_OSX_SYSROOT}")
+    set(NCURSES_CFLAGS "${NCURSES_CFLAGS} -arch arm64 -arch x86_64 -isysroot${CMAKE_OSX_SYSROOT}")
+    set(NCURSES_CXXFLAGS "${NCURSES_CXXFLAGS} -arch arm64 -arch x86_64 -isysroot${CMAKE_OSX_SYSROOT}")
+    set(NCURSES_CPPFLAGS "${NCURSES_CPPFLAGS} -isysroot${CMAKE_OSX_SYSROOT}")
 endif()
 
 ExternalProject_Add(ncurses
@@ -40,7 +40,7 @@ ExternalProject_Add(ncurses
     SOURCE_DIR "${NCURSES_SRC}"
     INSTALL_DIR "${NCURSES_INSTALL}"
     CONFIGURE_COMMAND
-    ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${OSX_NCURSES_ARCH_CFLAGS} CPPFLAGS=${OSX_NCURSES_ARCH_CPPFLAGS} CXXFLAGS=${OSX_NCURSES_ARCH_CXXFLAGS} "${NCURSES_SRC}/configure" --enable-widec --without-debug --without-cxx-binding --prefix=${NCURSES_INSTALL} --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo
+    ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${NCURSES_CFLAGS} CPPFLAGS=${NCURSES_CPPFLAGS} CXXFLAGS=${NCURSES_CXXFLAGS} "${NCURSES_SRC}/configure" --enable-widec --without-debug --without-cxx-binding --without-ada --prefix=${NCURSES_INSTALL} --with-termlib=tinfo --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo
     BUILD_COMMAND
         make
     INSTALL_COMMAND
@@ -98,8 +98,8 @@ list(APPEND LLVM_COMMON_ARGS
     "-DCMAKE_BUILD_TYPE=Release"
 )
 
-set(LLVM_C_FLAGS "")
-set(LLVM_CXX_FLAGS "")
+set(LLVM_C_FLAGS "-fno-stack-protector")
+set(LLVM_CXX_FLAGS "-fno-stack-protector")
 
 if (MADRONA_X64)
     set(LLVM_C_FLAGS "${LLVM_C_FLAGS} -march=x86-64-v3")
@@ -121,8 +121,8 @@ set(LLVM_TOOLCHAIN_INSTALL "${LLVM_TOOLCHAIN_PREFIX}/install")
 
 # libcxx is built without exception & rtti support, so these flags are
 # required during stage2 otherwise the stage2 binaries will fail to link
-set(LLVM_STAGE2_CXX_FLAGS "${LLVM_CXX_FLAGS} -fno-stack-protector -fno-exceptions -fno-rtti")
-set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_CXX_FLAGS} -fno-stack-protector -fno-exceptions -fno-rtti")
+set(LLVM_STAGE2_CXX_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -fno-rtti")
+set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -fno-rtti")
 
 if (APPLE)
     # On Darwin, the custom libc++'s path isn't in the default search path, but
@@ -144,17 +144,13 @@ list(APPEND LLVM_TOOLCHAIN_ARGS
     "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS}"
     "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS}"
     "-DCMAKE_INSTALL_PREFIX=${LLVM_TOOLCHAIN_INSTALL}"
-    "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
-    "-Dzstd_INCLUDE_DIR=${ZSTD_INSTALL}/include"
-    "-Dzstd_LIBRARY=${ZSTD_INSTALL}/lib/libzstd.a"
-    "-DZLIB_ROOT=${ZLIB_INSTALL}"
+    "-DCMAKE_PREFIX_PATH=${NCURSES_INSTALL}$<SEMICOLON>${ZSTD_INSTALL}$<SEMICOLON>${ZLIB_INSTALL}"
     "-DZLIB_USE_STATIC_LIBS=ON"
     "-DBOOTSTRAP_CMAKE_C_FLAGS=${LLVM_C_FLAGS}"
     "-DBOOTSTRAP_CMAKE_CXX_FLAGS=${LLVM_STAGE2_CXX_FLAGS}"
     "-DBOOTSTRAP_CMAKE_EXE_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
     "-DBOOTSTRAP_CMAKE_SHARED_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
     "-DBOOTSTRAP_CMAKE_MODULE_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
-    "-DBOOTSTRAP_CMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
     "-C ${CMAKE_CURRENT_LIST_DIR}/llvm-stage1.cmake"
 )
 
@@ -190,15 +186,15 @@ if (APPLE)
         "-DBOOTSTRAP_CMAKE_LIBTOOL=${LLVM_TOOLCHAIN_BUILD}/apple_libtool_hack.sh"
     )
 else()
+    list(APPEND LLVM_INSTALL_TARGETS 
+        stage2-install-distribution-stripped
+    )
+
     # On non-apple, we can do a normal static link against our new libc++ 
     # in the bootstrap build. This is handled with custom linker flags above
     # for mac builds.
     list(APPEND LLVM_TOOLCHAIN_ARGS
         "-DBOOTSTRAP_LLVM_STATIC_LINK_CXX_STDLIB=ON"
-    )
-
-    list(APPEND LLVM_INSTALL_TARGETS 
-        stage2-install-distribution-stripped
     )
 endif()
 
@@ -207,7 +203,7 @@ endif()
 # Forcing the generator to Ninja  fixes it because Ninja can't work on
 # multiple ExternalProjects in parallel
 ExternalProject_Add(llvm_toolchain
-    DEPENDS zstd zlib
+    DEPENDS zstd zlib ncurses
     SOURCE_DIR "${llvm_project_SOURCE_DIR}"
     PREFIX "${LLVM_TOOLCHAIN_PREFIX}"
     BINARY_DIR "${LLVM_TOOLCHAIN_BUILD}"
