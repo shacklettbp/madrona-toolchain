@@ -19,6 +19,40 @@ find_package(Python 3.6 COMPONENTS Interpreter)
 
 include(versions.cmake)
 
+set(NCURSES_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/ncurses")
+set(NCURSES_SRC "${NCURSES_PREFIX}/sources")
+set(NCURSES_INSTALL "${NCURSES_PREFIX}/install")
+
+set(OSX_NCURSES_ARCH_CFLAGS)
+set(OSX_NCURSES_ARCH_CXXFLAGS)
+set(OSX_NCURSES_ARCH_CPPFLAGS)
+if (APPLE)
+    set(OSX_NCURSES_ARCH_CFLAGS "-arch arm64 -arch x86_64 -isysroot${CMAKE_OSX_SYSROOT}")
+    set(OSX_NCURSES_ARCH_CXXFLAGS "-arch arm64 -arch x86_64 -isysroot${CMAKE_OSX_SYSROOT}")
+    set(OSX_NCURSES_ARCH_CPPFLAGS "-isysroot${CMAKE_OSX_SYSROOT}")
+endif()
+
+ExternalProject_Add(ncurses
+    URL "https://ftp.gnu.org/gnu/ncurses/ncurses-${NCURSES_VERSION}.tar.gz"
+    URL_HASH SHA256=${NCURSES_HASH}
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    PREFIX "${NCURSES_PREFIX}"
+    SOURCE_DIR "${NCURSES_SRC}"
+    INSTALL_DIR "${NCURSES_INSTALL}"
+    CONFIGURE_COMMAND
+    ${CMAKE_COMMAND} -E env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CFLAGS=${OSX_NCURSES_ARCH_CFLAGS} CPPFLAGS=${OSX_NCURSES_ARCH_CPPFLAGS} CXXFLAGS=${OSX_NCURSES_ARCH_CXXFLAGS} "${NCURSES_SRC}/configure" --enable-widec --without-debug --without-cxx-binding --prefix=${NCURSES_INSTALL} --with-terminfo-dirs=/usr/share/terminfo --with-default-terminfo-dir=/usr/share/terminfo
+    BUILD_COMMAND
+        make
+    INSTALL_COMMAND
+        make install
+    CMAKE_ARGS
+        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+        "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+        "-DCMAKE_INSTALL_PREFIX=${NCURSES_INSTALL}"
+        "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+)
+
 set(ZSTD_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/zstd")
 set(ZSTD_INSTALL "${ZSTD_PREFIX}/install")
 
