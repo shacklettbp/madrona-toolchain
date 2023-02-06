@@ -237,22 +237,22 @@ ExternalProject_Add(llvm_toolchain
 #    set(LIBUNWIND_INSTALL_LIBRARY ON CACHE BOOL "")
 #endif()
 
-#ExternalProject_Add(libcxx
-#    DEPENDS llvm_toolchain
-#    SOURCE_DIR "${llvm_project_SOURCE_DIR}"
-#    PREFIX "${LIBCXX_PREFIX}"
-#    BINARY_DIR "${LIBCXX_BUILD}"
-#    INSTALL_DIR "${LIBCXX_INSTALL}"
-#    CMAKE_ARGS
-#        ${LLVM_COMMON_ARGS}
-#        ${LLVM_LIBCXX_ARGS}
-#    SOURCE_SUBDIR runtimes
-#    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxxabi --target unwind
-#)
-#
-#set(LIBCXX_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx")
-#set(LIBCXX_BUILD "${LIBCXX_PREFIX}/build")
-#set(LIBCXX_INSTALL "${LIBCXX_PREFIX}/install")
+set(LIBCXX_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-noexcept")
+set(LIBCXX_BUILD "${LIBCXX_PREFIX}/build")
+set(LIBCXX_INSTALL "${LIBCXX_PREFIX}/install")
+
+ExternalProject_Add(libcxx
+    DEPENDS llvm_toolchain
+    SOURCE_DIR "${llvm_project_SOURCE_DIR}"
+    PREFIX "${LIBCXX_PREFIX}"
+    BINARY_DIR "${LIBCXX_BUILD}"
+    INSTALL_DIR "${LIBCXX_INSTALL}"
+    CMAKE_ARGS
+        ${LLVM_COMMON_ARGS}
+        ${LLVM_LIBCXX_ARGS}
+    SOURCE_SUBDIR runtimes
+    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxxabi --target unwind
+)
 #
 #list(APPEND LLVM_LIBCXX_ARGS
 #    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS}"
