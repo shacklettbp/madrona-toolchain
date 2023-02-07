@@ -38,7 +38,7 @@ function(madrona_setup_toolchain)
         endif()
     endif()
     
-    set(DEPS_URL "https://github.com/shacklettbp/madrona-deps/releases/download/${MADRONA_TOOLCHAIN_VERSION}/madrona-deps-${MADRONA_TOOLCHAIN_VERSION}-${TOOLCHAIN_OS_NAME}.tar.zst")
+    set(DEPS_URL "https://github.com/shacklettbp/madrona-deps/releases/download/${MADRONA_TOOLCHAIN_VERSION}/madrona-toolchain-${MADRONA_TOOLCHAIN_VERSION}-${TOOLCHAIN_OS_NAME}.tar.zst")
     
     FetchContent_Declare(MadronaBundledToolchain
         URL ${DEPS_URL}
