@@ -38,7 +38,7 @@ function(madrona_setup_toolchain)
         endif()
     endif()
     
-    set(DEPS_URL "https://github.com/shacklettbp/madrona-deps/releases/download/${MADRONA_TOOLCHAIN_VERSION}/madrona-toolchain-${MADRONA_TOOLCHAIN_VERSION}-${TOOLCHAIN_OS_NAME}.tar.zst")
+    set(DEPS_URL "https://github.com/shacklettbp/madrona-toolchain/releases/download/${MADRONA_TOOLCHAIN_VERSION}/madrona-toolchain-${MADRONA_TOOLCHAIN_VERSION}-${TOOLCHAIN_OS_NAME}.tar.zst")
     
     FetchContent_Declare(MadronaBundledToolchain
         URL ${DEPS_URL}
@@ -59,49 +59,7 @@ function(madrona_setup_toolchain)
     endif()
 
     set(CMAKE_C_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang" CACHE STRING "")
-    set(CMAKE_CXX_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang++" CACHE STRING "")
-
-    add_library(madrona_libcxx INTERFACE)
-    target_compile_options(madrona_libcxx INTERFACE
-        -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
-    )
-    target_link_options(madrona_libcxx INTERFACE
-        -nostdlib++ -fno-exceptions -fno-rtti
-    )
-    target_include_directories(madrona_libcxx SYSTEM INTERFACE
-        $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
-    )
-    
-    find_library(MADRONA_BUNDLED_LIBCXX c++
-        PATHS "${TOOLCHAIN_ROOT}/libcxx-noexcept/lib"
-        REQUIRED
-        NO_DEFAULT_PATH
-    )
-    
-    target_link_libraries(madrona_libcxx INTERFACE
-        ${MADRONA_BUNDLED_LIBCXX}
-    )
-
-    add_library(madrona_libcxx_except INTERFACE)
-    target_compile_options(madrona_libcxx_except INTERFACE
-        -nostdinc++ -nostdlib++
-    )
-    target_link_options(madrona_libcxx_except INTERFACE
-        -nostdlib++
-    )
-    target_include_directories(madrona_libcxx_except SYSTEM INTERFACE
-        $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-except/include/c++/v1>
-    )
-    
-    find_library(MADRONA_BUNDLED_LIBCXX_EXCEPT c++
-        PATHS "${TOOLCHAIN_ROOT}/libcxx-except/lib"
-        REQUIRED
-        NO_DEFAULT_PATH
-    )
-    
-    target_link_libraries(madrona_libcxx_except INTERFACE
-        ${MADRONA_BUNDLED_LIBCXX_EXCEPT}
-    )
+    set(CMAKE_CXX_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang++" -nostdlib++ CACHE STRING "")
 endfunction()
 
 madrona_setup_toolchain()
