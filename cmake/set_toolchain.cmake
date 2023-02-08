@@ -47,6 +47,7 @@ function(madrona_setup_toolchain)
         DOWNLOAD_NAME cur.tar # Can't name it .tar.xz or CMake will ignore
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         SOURCE_DIR "${TOOLCHAIN_REPO}/bundled-toolchain"
+        STAMP_DIR "${TOOLCHAIN_REPO}/download/timestamps"
     )
     
     FetchContent_MakeAvailable(MadronaBundledToolchain)
