@@ -16,6 +16,7 @@ include(FetchContent)
 include(ExternalProject)
 
 find_package(Python 3.6 COMPONENTS Interpreter)
+find_package(Patch REQUIRED)
 
 include(versions.cmake)
 
@@ -119,7 +120,7 @@ FetchContent_Declare(llvm_project
     URL https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz
     URL_HASH SHA256=${LLVM_HASH}
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    PATCH_COMMAND git apply "${CMAKE_CURRENT_SOURCE_DIR}/libcxx_name.patch"
+    PATCH_COMMAND ${Patch_EXECUTABLE} -p1 < "${CMAKE_CURRENT_SOURCE_DIR}/libcxx_name.patch"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
 )
