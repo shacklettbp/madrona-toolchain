@@ -1,12 +1,12 @@
 set(TOOLCHAIN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/bundled-toolchain")
 
-find_library(MADRONA_BUNDLED_LIBCXX c++
+find_library(MADRONA_BUNDLED_LIBCXX c++-noexcept
     PATHS "${TOOLCHAIN_ROOT}/libcxx-noexcept/lib"
     REQUIRED
     NO_DEFAULT_PATH
 )
 
-find_library(MADRONA_BUNDLED_LIBCXX_EXCEPT c++
+find_library(MADRONA_BUNDLED_LIBCXX_EXCEPT c++-except
     PATHS "${TOOLCHAIN_ROOT}/libcxx-except/lib"
     REQUIRED
     NO_DEFAULT_PATH
