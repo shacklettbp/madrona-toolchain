@@ -56,7 +56,7 @@ function(madrona_setup_toolchain)
     set(TOOLCHAIN_SYSROOT "${madronabundledtoolchain_SOURCE_DIR}/toolchain")
     
     if (MADRONA_MACOS)
-        file(GLOB TOOLCHAIN_SYSROOT "${TOOLCHAIN_SYSROOT}/Toolchains/LLVM.*xctoolchain/usr")
+        file(GLOB TOOLCHAIN_SYSROOT "${TOOLCHAIN_SYSROOT}/Toolchains/LLVM*.xctoolchain/usr")
     endif()
 
     set(CMAKE_C_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang" CACHE STRING "")
