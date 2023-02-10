@@ -14,7 +14,15 @@ set(LLVM_CREATE_XCODE_TOOLCHAIN ON CACHE BOOL "")
 set(LIBCXX_INSTALL_HEADERS OFF CACHE BOOL "")
 set(LIBCXX_INSTALL_LIBRARY OFF CACHE BOOL "")
 set(LIBCXXABI_INSTALL_HEADERS OFF CACHE BOOL "")
-set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
+
+if (APPLE OR WIN32)
+    set(LIBUNWIND_INSTALL_LIBRARY OFF CACHE BOOL "")
+else()
+    # libunwind seems to be linked unconditionally on linux even when no
+    # exceptions are used. Need to install the library even though we don't 
+    # install libcxx so the compiler isn't broken for cmake checks
+    set(LIBUNWIND_INSTALL_LIBRARY ON CACHE BOOL "")
+endif()
 
 if (APPLE)
     # macOS universal build fails with LTO due to mixed LLVM IR and MachO

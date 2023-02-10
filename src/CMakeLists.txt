@@ -111,11 +111,6 @@ list(APPEND LLVM_COMMON_ARGS
 set(LLVM_C_FLAGS "-fno-stack-protector")
 set(LLVM_CXX_FLAGS "-fno-stack-protector")
 
-if (MADRONA_X64)
-    set(LLVM_C_FLAGS "${LLVM_C_FLAGS} -march=x86-64-v3")
-    set(LLVM_CXX_FLAGS "${LLVM_CXX_FLAGS} -march=x86-64-v3")
-endif()
-
 FetchContent_Declare(llvm_project
     URL https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz
     URL_HASH SHA256=${LLVM_HASH}
@@ -132,8 +127,15 @@ set(LLVM_TOOLCHAIN_INSTALL "${LLVM_TOOLCHAIN_PREFIX}/install")
 
 # libcxx is built without exception & rtti support, so these flags are
 # required during stage2 otherwise the stage2 binaries will fail to link
+set(LLVM_STAGE2_C_FLAGS "${LLVM_C_FLAGS}")
 set(LLVM_STAGE2_CXX_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -fno-rtti")
-set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_CXX_FLAGS} -fno-exceptions -fno-rtti")
+
+if (MADRONA_X64)
+    set(LLVM_STAGE2_C_FLAGS "${LLVM_C_FLAGS} -march=x86-64-v3")
+    set(LLVM_STAGE2_CXX_FLAGS "${LLVM_CXX_FLAGS} -march=x86-64-v3")
+endif()
+
+set(LLVM_STAGE2_LINKER_FLAGS "${LLVM_STAGE2_CXX_FLAGS}")
 
 if (APPLE)
     # On Darwin, the custom libc++'s path isn't in the default search path, but
@@ -158,7 +160,7 @@ list(APPEND LLVM_TOOLCHAIN_ARGS
     "-DCMAKE_PREFIX_PATH=${NCURSES_INSTALL}/usr/$<SEMICOLON>${ZSTD_INSTALL}$<SEMICOLON>${ZLIB_INSTALL}"
     "-DZLIB_USE_STATIC_LIBS=ON"
     "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
-    "-DBOOTSTRAP_CMAKE_C_FLAGS=${LLVM_C_FLAGS}"
+    "-DBOOTSTRAP_CMAKE_C_FLAGS=${LLVM_STAGE2_C_FLAGS}"
     "-DBOOTSTRAP_CMAKE_CXX_FLAGS=${LLVM_STAGE2_CXX_FLAGS}"
     "-DBOOTSTRAP_CMAKE_EXE_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
     "-DBOOTSTRAP_CMAKE_SHARED_LINKER_FLAGS=${LLVM_STAGE2_LINKER_FLAGS}"
@@ -246,6 +248,7 @@ list(APPEND LIBCXX_COMMON_ARGS
     "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++"
     "-DCMAKE_SHARED_LINKER_FLAGS=-nostdlib++"
     "-DCMAKE_MODULE_LINKER_FLAGS=-nostdlib++"
+    "-DLIBUNWIND_INSTALL_LIBRARY=OFF" # libunwind installed with compiler
     -C "${CMAKE_CURRENT_LIST_DIR}/libcxx-common.cmake"
 )
 
@@ -260,17 +263,6 @@ else()
         "-DCMAKE_C_COMPILER=${LLVM_TOOLCHAIN_INSTALL}/bin/clang"
         "-DCMAKE_CXX_COMPILER=${LLVM_TOOLCHAIN_INSTALL}/bin/clang++"
 )
-endif()
-
-if (APPLE)
-    list(APPEND LIBCXX_COMMON_ARGS
-        "-DLIBUNWIND_INSTALL_LIBRARY=OFF"
-    )
-else()
-    list(APPEND LIBCXX_COMMON_ARGS
-        # On linux, the unwind library seems to be linked unconditionally
-        "-DLIBUNWIND_INSTALL_LIBRARY=ON"
-    )
 endif()
 
 set(LIBCXX_NOEXCEPT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-noexcept")
