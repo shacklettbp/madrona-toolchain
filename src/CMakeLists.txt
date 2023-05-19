@@ -300,39 +300,3 @@ install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/lib
         PATTERN *
         PATTERN *experimental* EXCLUDE
 )
-
-set(LIBCXX_EXCEPT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-except")
-set(LIBCXX_EXCEPT_BUILD "${LIBCXX_EXCEPT_PREFIX}/build")
-set(LIBCXX_EXCEPT_INSTALL "${LIBCXX_EXCEPT_PREFIX}/install")
-
-ExternalProject_Add(libcxx-except
-    DEPENDS llvm_toolchain
-    SOURCE_DIR "${llvm_project_SOURCE_DIR}"
-    PREFIX "${LIBCXX_EXCEPT_PREFIX}"
-    BINARY_DIR "${LIBCXX_EXCEPT_BUILD}"
-    INSTALL_DIR "${LIBCXX_EXCEPT_INSTALL}"
-    CMAKE_GENERATOR Ninja
-    CMAKE_ARGS
-        ${LIBCXX_COMMON_ARGS}
-        "-DCMAKE_INSTALL_PREFIX=${LIBCXX_EXCEPT_INSTALL}"
-        -DLIBCXX_ABI_NAMESPACE=__emad1
-        -DLIBCXXABI_ENABLE_EXCEPTIONS=ON
-        -DLIBCXX_ENABLE_EXCEPTIONS=ON
-        -DLIBCXX_ENABLE_RTTI=ON
-        -DLIBCXX_DYLIB_NAME=c++-except
-    SOURCE_SUBDIR runtimes
-    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi --target unwind
-)
-
-install(DIRECTORY ${LIBCXX_EXCEPT_INSTALL}/include
-    DESTINATION libcxx-except/
-    USE_SOURCE_PERMISSIONS
-)
-
-install(DIRECTORY ${LIBCXX_EXCEPT_INSTALL}/lib
-    DESTINATION libcxx-except/
-    USE_SOURCE_PERMISSIONS
-    FILES_MATCHING
-        PATTERN *
-        PATTERN *experimental* EXCLUDE
-)
