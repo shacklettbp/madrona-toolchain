@@ -52,15 +52,20 @@ function(madrona_setup_toolchain)
     
     FetchContent_MakeAvailable(MadronaBundledToolchain)
     
-    set(TOOLCHAIN_ROOT "${madronabundledtoolchain_SOURCE_DIR}")
-    set(TOOLCHAIN_SYSROOT "${madronabundledtoolchain_SOURCE_DIR}/toolchain")
+    if (MADRONA_TOOLCHAIN_ROOT_OVERRIDE)
+        set(TOOLCHAIN_ROOT "${MADRONA_TOOLCHAIN_ROOT_OVERRIDE}")
+    else()
+        set(TOOLCHAIN_ROOT "${madronabundledtoolchain_SOURCE_DIR}")
+    endif()
+
+    set(TOOLCHAIN_SYSROOT "${TOOLCHAIN_ROOT}/toolchain")
     
     if (MADRONA_MACOS)
         file(GLOB TOOLCHAIN_SYSROOT "${TOOLCHAIN_SYSROOT}/Toolchains/LLVM*.xctoolchain/usr")
     endif()
 
     set(CMAKE_C_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang" CACHE STRING "")
-    set(CMAKE_CXX_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang++" -nostdlib++ CACHE STRING "")
+    set(CMAKE_CXX_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang++" CACHE STRING "")
 endfunction()
 
 madrona_setup_toolchain()
