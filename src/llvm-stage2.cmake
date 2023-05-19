@@ -69,6 +69,7 @@ set(LLVM_DISTRIBUTION_COMPONENTS
     builtins
     runtimes
     Remarks
+    compiler-rt
     ${LLVM_TOOLCHAIN_TOOLS}
 
     CACHE STRING ""
