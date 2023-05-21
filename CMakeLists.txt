@@ -4,6 +4,12 @@ else()
     set(TOOLCHAIN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/bundled-toolchain")
 endif()
 
+set(TOOLCHAIN_SYSROOT "${TOOLCHAIN_ROOT}/toolchain")
+
+if (APPLE)
+    file(GLOB TOOLCHAIN_SYSROOT "${TOOLCHAIN_SYSROOT}/Toolchains/LLVM*.xctoolchain/usr")
+endif()
+
 find_library(MADRONA_BUNDLED_LIBCXX libc++-noexcept.so.1 libc++-noexcept.1.dylib libc++-noexcept.dll
     PATHS "${TOOLCHAIN_ROOT}/libcxx-noexcept/lib"
     REQUIRED
@@ -62,7 +68,7 @@ target_compile_options(madrona_libcxx_except_static INTERFACE
 )
 
 find_library(MADRONA_STATIC_LIBCXX_EXCEPT libc++.a
-    PATHS "${TOOLCHAIN_ROOT}/toolchain/lib"
+    PATHS "${TOOLCHAIN_SYSROOT}/lib"
     PATH_SUFFIXES "x86_64-pc-linux-gnu"
     REQUIRED
     NO_DEFAULT_PATH
