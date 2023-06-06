@@ -238,11 +238,22 @@ install(DIRECTORY ${LLVM_TOOLCHAIN_INSTALL}/
     USE_SOURCE_PERMISSIONS
 )
 
+if (APPLE)
+    set(XCTOOLCHAIN_PATH "${LLVM_TOOLCHAIN_INSTALL}/Toolchains/LLVM${LLVM_VERSION}.xctoolchain/usr")
+    set(NEW_C_COMPILER "${XCTOOLCHAIN_PATH}/bin/clang")
+    set(NEW_CXX_COMPILER "${XCTOOLCHAIN_PATH}/bin/clang++")
+else()
+    set(NEW_C_COMPILER "${LLVM_TOOLCHAIN_INSTALL}/bin/clang")
+    set(NEW_CXX_COMPILER "${LLVM_TOOLCHAIN_INSTALL}/bin/clang++")
+endif()
+
 set(LIBCXX_COMMON_ARGS ${LLVM_COMMON_ARGS})
 list(APPEND LIBCXX_COMMON_ARGS
     -DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     -DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi$<SEMICOLON>libunwind
+    "-DCMAKE_C_COMPILER=${NEW_C_COMPILER}"
+    "-DCMAKE_CXX_COMPILER=${NEW_CXX_COMPILER}"
     "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS} -nostdlib++ -nostdinc++"
     "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS} -nostdlib++ -nostdinc++"
     "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++"
@@ -251,19 +262,6 @@ list(APPEND LIBCXX_COMMON_ARGS
     "-DLIBUNWIND_INSTALL_LIBRARY=OFF" # libunwind installed with compiler
     -C "${CMAKE_CURRENT_LIST_DIR}/libcxx-common.cmake"
 )
-
-if (APPLE)
-    set(XCTOOLCHAIN_PATH "${LLVM_TOOLCHAIN_INSTALL}/Toolchains/LLVM${LLVM_VERSION}.xctoolchain/usr")
-    list(APPEND LIBCXX_COMMON_ARGS
-        "-DCMAKE_C_COMPILER=${XCTOOLCHAIN_PATH}/bin/clang"
-        "-DCMAKE_CXX_COMPILER=${XCTOOLCHAIN_PATH}/bin/clang++"
-    )
-else()
-    list(APPEND LIBCXX_COMMON_ARGS
-        "-DCMAKE_C_COMPILER=${LLVM_TOOLCHAIN_INSTALL}/bin/clang"
-        "-DCMAKE_CXX_COMPILER=${LLVM_TOOLCHAIN_INSTALL}/bin/clang++"
-)
-endif()
 
 set(LIBCXX_NOEXCEPT_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/libcxx-noexcept")
 set(LIBCXX_NOEXCEPT_BUILD "${LIBCXX_NOEXCEPT_PREFIX}/build")
@@ -299,4 +297,56 @@ install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/lib
     FILES_MATCHING
         PATTERN *
         PATTERN *experimental* EXCLUDE
+)
+
+set(DXC_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/dxc")
+set(DXC_SRC "${DXC_PREFIX}/src")
+set(DXC_BUILD "${DXC_PREFIX}/build")
+set(DXC_INSTALL "${DXC_PREFIX}/install")
+
+if (MADRONA_X64 AND MADRONA_LINUX)
+    set(DXC_LINKER_FLAGS "-nostdlib++ ${LLVM_TOOLCHAIN_INSTALL}/lib/x86_64-pc-linux-gnu/libc++.a")
+elseif (MADRONA_MACOS)
+    set(DXC_LINKER_FLAGS "-nostdlib++ ${LLVM_TOOLCHAIN_INSTALL}/lib/libc++.a")
+endif()
+
+ExternalProject_Add(dxc
+    DEPENDS llvm_toolchain
+    GIT_REPOSITORY https://github.com/microsoft/DirectXShaderCompiler.git
+    GIT_TAG "${DXC_VERSION}"
+    GIT_SHALLOW ON
+    PREFIX "${DXC_PREFIX}"
+    SOURCE_DIR "${DXC_SRC}"
+    STAMP_DIR "${DXC_PREFIX}/stamps"
+    BINARY_DIR "${DXC_BUILD}"
+    INSTALL_DIR "${DXC_INSTALL}"
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    CMAKE_GENERATOR Ninja
+    INSTALL_COMMAND ninja -C "${DXC_BUILD}" install-distribution
+    CMAKE_ARGS
+        "-DCMAKE_INSTALL_PREFIX=${DXC_INSTALL}"
+        "-DCMAKE_C_COMPILER=${NEW_C_COMPILER}"
+        "-DCMAKE_CXX_COMPILER=${NEW_CXX_COMPILER}"
+        "-DCMAKE_BUILD_TYPE=Release"
+        "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+        "-DCMAKE_EXE_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
+        "-DCMAKE_SHARED_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
+        "-DCMAKE_MODULE_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
+        "-DLLVM_ENABLE_ZLIB=OFF"
+        "-C ${DXC_SRC}/cmake/caches/PredefinedParams.cmake"
+)
+
+install(DIRECTORY ${DXC_INSTALL}/include
+    DESTINATION dxc/
+    USE_SOURCE_PERMISSIONS
+)
+
+install(DIRECTORY ${DXC_INSTALL}/lib
+    DESTINATION dxc/
+    USE_SOURCE_PERMISSIONS
+)
+
+install(DIRECTORY ${DXC_INSTALL}/bin
+    DESTINATION dxc/
+    USE_SOURCE_PERMISSIONS
 )
