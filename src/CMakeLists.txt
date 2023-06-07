@@ -324,6 +324,14 @@ list(APPEND DXC_CMAKE_ARGS
 )
 
 if (MADRONA_MACOS)
+    # There is an annoying issue here: llvm-ar does not work with universal
+    # binaries, because of this CMake uses system ar by default on macos.
+    # However, it still tries to use llvm-ranlib by default, which then
+    # breaks universal binaries. One option is to force system ranlib on macos
+    # The better option is to do what LLVM itself does, which is to just use
+    # libtool on macos for building static libraries since it is more
+    # optimized anyway: https://reviews.llvm.org/D19611. llvm-libtool
+    # correctly handles universal binaries
     list(APPEND DXC_CMAKE_ARGS
         "-DCMAKE_CXX_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
         "-DCMAKE_RANLIB=\"\""
