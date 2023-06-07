@@ -333,7 +333,7 @@ if (MADRONA_MACOS)
     # optimized anyway: https://reviews.llvm.org/D19611. llvm-libtool
     # correctly handles universal binaries
     list(APPEND DXC_CMAKE_ARGS
-        "-DCMAKE_CXX_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
+        "-DCMAKE_CXX_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool-darwin\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
         "-DCMAKE_RANLIB=\"\""
     )
 endif()
