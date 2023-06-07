@@ -31,14 +31,13 @@ if (APPLE)
     set(LLVM_DISABLE_ASSEMBLY_FILES ON CACHE BOOL "")
 endif()
 
-set(LLVM_TOOLCHAIN_TOOLS
+list(APPEND TOOLCHAIN_TOOLS
     dsymutil
     llvm-ar
     llvm-cxxfilt
     llvm-nm
     llvm-objcopy
     llvm-lipo
-    llvm-libtool
     llvm-readelf
     llvm-readobj
     llvm-strip
@@ -48,9 +47,13 @@ set(LLVM_TOOLCHAIN_TOOLS
     llvm-profdata
     llvm-objdump
     llvm-cov
-
-    CACHE STRING ""
 )
+
+if (APPLE)
+    list(APPEND TOOLCHAIN_TOOLS llvm-libtool-darwin)
+endif()
+
+set(LLVM_TOOLCHAIN_TOOLS ${TOOLCHAIN_TOOLS} CACHE STRING "")
 
 set(LLVM_DISTRIBUTION_COMPONENTS
     clang
