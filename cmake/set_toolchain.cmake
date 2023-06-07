@@ -77,9 +77,9 @@ function(madrona_setup_toolchain)
     # optimized anyway: https://reviews.llvm.org/D19611. llvm-libtool
     # correctly handles universal binaries
     if (MADRONA_MACOS)
-        set(CMAKE_CXX_CREATE_STATIC_LIBRARY "\"${TOOLCHAIN_SYSROOT}/bin/llvm-libtool-darwin\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>")
+        set(CMAKE_CXX_CREATE_STATIC_LIBRARY "\"${TOOLCHAIN_SYSROOT}/bin/llvm-libtool-darwin\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>" PARENT_SCOPE)
         # need to disable ranlib or it will run after libtool
-        set(CMAKE_RANLIB "")
+        set(CMAKE_RANLIB "" PARENT_SCOPE)
     endif ()
 endfunction()
 
