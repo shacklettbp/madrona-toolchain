@@ -325,7 +325,6 @@ list(APPEND DXC_CMAKE_ARGS
 
 if (MADRONA_MACOS)
     list(APPEND DXC_CMAKE_ARGS
-        "-DCMAKE_C_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
         "-DCMAKE_CXX_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
         "-DCMAKE_RANLIB=\"\""
     )
