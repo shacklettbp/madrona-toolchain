@@ -239,13 +239,13 @@ install(DIRECTORY ${LLVM_TOOLCHAIN_INSTALL}/
 )
 
 if (APPLE)
-    set(XCTOOLCHAIN_PATH "${LLVM_TOOLCHAIN_INSTALL}/Toolchains/LLVM${LLVM_VERSION}.xctoolchain/usr")
-    set(NEW_C_COMPILER "${XCTOOLCHAIN_PATH}/bin/clang")
-    set(NEW_CXX_COMPILER "${XCTOOLCHAIN_PATH}/bin/clang++")
+    set(TOOLCHAIN_PATH "${LLVM_TOOLCHAIN_INSTALL}/Toolchains/LLVM${LLVM_VERSION}.xctoolchain/usr")
 else()
-    set(NEW_C_COMPILER "${LLVM_TOOLCHAIN_INSTALL}/bin/clang")
-    set(NEW_CXX_COMPILER "${LLVM_TOOLCHAIN_INSTALL}/bin/clang++")
+    set(TOOLCHAIN_PATH "${LLVM_TOOLCHAIN_INSTALL}")
 endif()
+
+set(NEW_C_COMPILER "${TOOLCHAIN_PATH}/bin/clang")
+set(NEW_CXX_COMPILER "${TOOLCHAIN_PATH}/bin/clang++")
 
 set(LIBCXX_COMMON_ARGS ${LLVM_COMMON_ARGS})
 list(APPEND LIBCXX_COMMON_ARGS
@@ -305,16 +305,36 @@ set(DXC_BUILD "${DXC_PREFIX}/build")
 set(DXC_INSTALL "${DXC_PREFIX}/install")
 
 if (MADRONA_X64 AND MADRONA_LINUX)
-    set(DXC_LINKER_FLAGS "-nostdlib++ ${LLVM_TOOLCHAIN_INSTALL}/lib/x86_64-pc-linux-gnu/libc++.a")
+    set(DXC_LINKER_FLAGS "-nostdlib++ ${TOOLCHAIN_PATH}/lib/x86_64-pc-linux-gnu/libc++.a")
 elseif (MADRONA_MACOS)
-    set(DXC_LINKER_FLAGS "-nostdlib++ ${LLVM_TOOLCHAIN_INSTALL}/lib/libc++.a")
+    set(DXC_LINKER_FLAGS "-nostdlib++ ${TOOLCHAIN_PATH}/lib/libc++.a")
+endif()
+
+list(APPEND DXC_CMAKE_ARGS
+    "-DCMAKE_INSTALL_PREFIX=${DXC_INSTALL}"
+    "-DCMAKE_C_COMPILER=${NEW_C_COMPILER}"
+    "-DCMAKE_CXX_COMPILER=${NEW_CXX_COMPILER}"
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+    "-DCMAKE_EXE_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
+    "-DCMAKE_SHARED_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
+    "-DCMAKE_MODULE_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
+    "-DLLVM_ENABLE_ZLIB=OFF"
+    "-C ${DXC_SRC}/cmake/caches/PredefinedParams.cmake"
+)
+
+if (MADRONA_MACOS)
+    list(APPEND DXC_CMAKE_ARGS
+        "-DCMAKE_C_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
+        "-DCMAKE_CXX_CREATE_STATIC_LIBRARY=\"${TOOLCHAIN_PATH}/bin/llvm-libtool\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>"
+        "-DCMAKE_RANLIB=\"\""
+    )
 endif()
 
 ExternalProject_Add(dxc
     DEPENDS llvm_toolchain
     GIT_REPOSITORY https://github.com/microsoft/DirectXShaderCompiler.git
     GIT_TAG "${DXC_VERSION}"
-    GIT_SHALLOW ON
     PREFIX "${DXC_PREFIX}"
     SOURCE_DIR "${DXC_SRC}"
     STAMP_DIR "${DXC_PREFIX}/stamps"
@@ -323,17 +343,7 @@ ExternalProject_Add(dxc
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     CMAKE_GENERATOR Ninja
     INSTALL_COMMAND ninja -C "${DXC_BUILD}" install-distribution
-    CMAKE_ARGS
-        "-DCMAKE_INSTALL_PREFIX=${DXC_INSTALL}"
-        "-DCMAKE_C_COMPILER=${NEW_C_COMPILER}"
-        "-DCMAKE_CXX_COMPILER=${NEW_CXX_COMPILER}"
-        "-DCMAKE_BUILD_TYPE=Release"
-        "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
-        "-DCMAKE_EXE_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
-        "-DCMAKE_SHARED_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
-        "-DCMAKE_MODULE_LINKER_FLAGS=${DXC_LINKER_FLAGS}"
-        "-DLLVM_ENABLE_ZLIB=OFF"
-        "-C ${DXC_SRC}/cmake/caches/PredefinedParams.cmake"
+    CMAKE_ARGS ${DXC_CMAKE_ARGS}
 )
 
 install(DIRECTORY ${DXC_INSTALL}/include

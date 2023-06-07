@@ -38,6 +38,7 @@ set(LLVM_TOOLCHAIN_TOOLS
     llvm-nm
     llvm-objcopy
     llvm-lipo
+    llvm-libtool
     llvm-readelf
     llvm-readobj
     llvm-strip
