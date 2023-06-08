@@ -81,3 +81,32 @@ target_link_libraries(madrona_libcxx_except_static INTERFACE
 target_link_options(madrona_libcxx_except_static INTERFACE
     -nostdlib++
 )
+
+# Setup DXC
+
+find_library(MADRONA_BUNDLED_LIBDXC libdxcompiler.so libdxcompiler.dylib
+    PATHS "${TOOLCHAIN_ROOT}/dxc/lib"
+    REQUIRED
+    NO_DEFAULT_PATH
+)
+
+cmake_path(GET MADRONA_BUNDLED_LIBDXC FILENAME MADRONA_LIBDXC_NAME)
+set(MADRONA_LIBDXC_BUILDLOC "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${MADRONA_LIBDXC_NAME}")
+
+add_custom_command(
+    OUTPUT ${MADRONA_LIBDXC_BUILDLOC}
+    DEPENDS ${MADRONA_BUNDLED_LIBDXC}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MADRONA_BUNDLED_LIBDXC}  ${MADRONA_LIBDXC_BUILDLOC}
+)
+
+add_custom_target(madrona_libdxc_shlib
+    DEPENDS ${MADRONA_LIBDXC_BUILDLOC}
+)
+
+add_library(madrona_dxcompiler SHARED IMPORTED GLOBAL)
+add_dependencies(madrona_dxcompiler madrona_libdxc_shlib)
+set_target_properties(madrona_dxcompiler PROPERTIES IMPORTED_LOCATION
+    ${MADRONA_LIBDXC_BUILDLOC})
+target_include_directories(madrona_dxcompiler SYSTEM INTERFACE
+    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/dxc/include/>
+)
