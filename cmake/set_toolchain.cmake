@@ -40,6 +40,7 @@ function(madrona_setup_toolchain)
     
     set(DEPS_URL "https://github.com/shacklettbp/madrona-toolchain/releases/download/${MADRONA_TOOLCHAIN_VERSION}/madrona-toolchain-${MADRONA_TOOLCHAIN_VERSION}-${TOOLCHAIN_OS_NAME}.tar.xz")
     
+    set(FETCHCONTENT_QUIET FALSE)
     FetchContent_Declare(MadronaBundledToolchain
         URL ${DEPS_URL}
         URL_HASH SHA256=${MADRONA_TOOLCHAIN_HASH}
