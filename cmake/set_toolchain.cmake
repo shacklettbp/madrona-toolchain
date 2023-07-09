@@ -1,6 +1,6 @@
 include(FetchContent)
 
-option(MADRONA_USE_TOOLCHAIN "Use prebuilt toolchain binaries" ON)
+option(MADRONA_USE_TOOLCHAIN "Use prebuilt toolchain" ON)
 if (NOT MADRONA_USE_TOOLCHAIN)
     return()
 endif()
@@ -52,35 +52,7 @@ function(madrona_setup_toolchain)
     
     FetchContent_MakeAvailable(MadronaBundledToolchain)
     
-    if (MADRONA_TOOLCHAIN_ROOT_OVERRIDE)
-        set(TOOLCHAIN_ROOT "${MADRONA_TOOLCHAIN_ROOT_OVERRIDE}")
-    else()
-        set(TOOLCHAIN_ROOT "${madronabundledtoolchain_SOURCE_DIR}")
-    endif()
-
-    set(TOOLCHAIN_SYSROOT "${TOOLCHAIN_ROOT}/toolchain")
-    
-    if (MADRONA_MACOS)
-        file(GLOB TOOLCHAIN_SYSROOT "${TOOLCHAIN_SYSROOT}/Toolchains/LLVM*.xctoolchain/usr")
-    endif()
-
-    set(CMAKE_C_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang" CACHE STRING "")
-    set(CMAKE_CXX_COMPILER "${TOOLCHAIN_SYSROOT}/bin/clang++" CACHE STRING "")
-
-    # On macos, universal builds with this toolchain will be broken due to
-    # llvm-ranlib not working with univeral libraries. /usr/bin/ar is picked
-    # by default by cmake, but the compiler ranlib is still used, breaking
-    # static libraries. 
-    # One option is to force /usr/bin/ranlib on macos.
-    # The better option is to do what LLVM itself does, which is to just use
-    # libtool on macos for building static libraries since it is more
-    # optimized anyway: https://reviews.llvm.org/D19611. llvm-libtool
-    # correctly handles universal binaries
-    if (MADRONA_MACOS)
-        set(CMAKE_CXX_CREATE_STATIC_LIBRARY "\"${TOOLCHAIN_SYSROOT}/bin/llvm-libtool-darwin\" -static -no_warning_for_no_symbols -o <TARGET> <LINK_FLAGS> <OBJECTS>" PARENT_SCOPE)
-        # need to disable ranlib or it will run after libtool
-        set(CMAKE_RANLIB "" PARENT_SCOPE)
-    endif ()
+    set(CMAKE_TOOLCHAIN_FILE "${TOOLCHAIN_REPO}/cmake/toolchain.cmake" PARENT_SCOPE)
 endfunction()
 
 madrona_setup_toolchain()
