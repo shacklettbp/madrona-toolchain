@@ -115,7 +115,6 @@ FetchContent_Declare(llvm_project
     URL https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-project-${LLVM_VERSION}.src.tar.xz
     URL_HASH SHA256=${LLVM_HASH}
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    PATCH_COMMAND ${Patch_EXECUTABLE} -p1 < "${CMAKE_CURRENT_SOURCE_DIR}/libcxx_name.patch"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
 )
@@ -281,7 +280,8 @@ ExternalProject_Add(libcxx-noexcept
         -DLIBCXXABI_ENABLE_EXCEPTIONS=OFF
         -DLIBCXX_ENABLE_EXCEPTIONS=OFF
         -DLIBCXX_ENABLE_RTTI=OFF
-        -DLIBCXX_DYLIB_NAME=c++-noexcept
+        -DLIBCXX_SHARED_OUTPUT_NAME=c++-noexcept
+        -DLIBCXX_STATIC_OUTPUT_NAME=c++-noexcept
     SOURCE_SUBDIR runtimes
     BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi --target unwind
 )
