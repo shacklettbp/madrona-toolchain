@@ -61,6 +61,16 @@ target_link_options(madrona_libcxx_static INTERFACE
     -fno-exceptions -fno-rtti -nostdlib++
 )
 
+add_library(madrona_libcxx_hdrs INTERFACE)
+
+target_compile_options(madrona_libcxx_hdrs INTERFACE
+    -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
+)
+
+target_include_directories(madrona_libcxx_hdrs SYSTEM INTERFACE
+    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
+)
+
 add_library(madrona_libcxx_except_static INTERFACE)
 
 target_compile_options(madrona_libcxx_except_static INTERFACE
@@ -79,5 +89,11 @@ target_link_libraries(madrona_libcxx_except_static INTERFACE
 )
 
 target_link_options(madrona_libcxx_except_static INTERFACE
+    -nostdlib++
+)
+
+add_library(madrona_libcxx_except_hdrs INTERFACE)
+
+target_compile_options(madrona_libcxx_except_hdrs INTERFACE
     -nostdlib++
 )
