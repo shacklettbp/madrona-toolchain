@@ -102,6 +102,8 @@ ExternalProject_Add(zlib
         "-DCMAKE_BUILD_TYPE=Release"
         "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
         "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+        # https://github.com/madler/zlib/issues/856
+        "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--undefined-version"
 )
 
 list(APPEND LLVM_COMMON_ARGS
@@ -250,15 +252,14 @@ set(LIBCXX_COMMON_ARGS ${LLVM_COMMON_ARGS})
 list(APPEND LIBCXX_COMMON_ARGS
     -DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-    -DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi$<SEMICOLON>libunwind
+    -DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi
     "-DCMAKE_C_COMPILER=${NEW_C_COMPILER}"
     "-DCMAKE_CXX_COMPILER=${NEW_CXX_COMPILER}"
-    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS} -nostdlib++ -nostdinc++"
-    "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS} -nostdlib++ -nostdinc++"
-    "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++"
-    "-DCMAKE_SHARED_LINKER_FLAGS=-nostdlib++"
-    "-DCMAKE_MODULE_LINKER_FLAGS=-nostdlib++"
-    "-DLIBUNWIND_INSTALL_LIBRARY=OFF" # libunwind installed with compiler
+    "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS} -nostdlib++ -nostdinc++ -unwindlib=none"
+    "-DCMAKE_CXX_FLAGS=${LLVM_CXX_FLAGS} -nostdlib++ -nostdinc++ -unwindlib=none"
+    "-DCMAKE_EXE_LINKER_FLAGS=-nostdlib++ -unwindlib=none"
+    "-DCMAKE_SHARED_LINKER_FLAGS=-nostdlib++ -unwindlib=none"
+    "-DCMAKE_MODULE_LINKER_FLAGS=-nostdlib++ -unwindlib=none"
     -C "${CMAKE_CURRENT_LIST_DIR}/libcxx-common.cmake"
 )
 
@@ -283,7 +284,7 @@ ExternalProject_Add(libcxx-noexcept
         -DLIBCXX_SHARED_OUTPUT_NAME=c++-noexcept
         -DLIBCXX_STATIC_OUTPUT_NAME=c++-noexcept
     SOURCE_SUBDIR runtimes
-    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi --target unwind
+    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi
 )
 
 install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/include
