@@ -29,35 +29,35 @@ add_custom_target(madrona_libcxx_shlib
     DEPENDS ${MADRONA_LIBCXX_BUILDLOC}
 )
 
-add_library(madrona_libcxx SHARED IMPORTED GLOBAL)
-add_dependencies(madrona_libcxx madrona_libcxx_shlib)
-set_target_properties(madrona_libcxx PROPERTIES IMPORTED_LOCATION ${MADRONA_LIBCXX_BUILDLOC})
+add_library(madrona_libcxx_shared SHARED IMPORTED GLOBAL)
+add_dependencies(madrona_libcxx_shared madrona_libcxx_shlib)
+set_target_properties(madrona_libcxx_shared PROPERTIES IMPORTED_LOCATION ${MADRONA_LIBCXX_BUILDLOC})
 
-target_compile_options(madrona_libcxx INTERFACE
+target_compile_options(madrona_libcxx_shared INTERFACE
     -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
 )
 target_link_options(madrona_libcxx INTERFACE
     -fno-exceptions -fno-rtti -nostdlib++
 )
+target_include_directories(madrona_libcxx_shared SYSTEM INTERFACE
+    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
+)
+
+add_library(madrona_libcxx INTERFACE)
+
+target_compile_options(madrona_libcxx INTERFACE
+    -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
+)
+
 target_include_directories(madrona_libcxx SYSTEM INTERFACE
     $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
 )
 
-add_library(madrona_libcxx_static INTERFACE)
-
-target_compile_options(madrona_libcxx_static INTERFACE
-    -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
-)
-
-target_include_directories(madrona_libcxx_static SYSTEM INTERFACE
-    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
-)
-
-target_link_libraries(madrona_libcxx_static INTERFACE
+target_link_libraries(madrona_libcxx INTERFACE
     "${TOOLCHAIN_ROOT}/libcxx-noexcept/lib/libc++-noexcept.a"
 )
 
-target_link_options(madrona_libcxx_static INTERFACE
+target_link_options(madrona_libcxx INTERFACE
     -fno-exceptions -fno-rtti -nostdlib++
 )
 
@@ -71,9 +71,9 @@ target_include_directories(madrona_libcxx_hdrs SYSTEM INTERFACE
     $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
 )
 
-add_library(madrona_libcxx_except_static INTERFACE)
+add_library(madrona_libcxx_except INTERFACE)
 
-target_compile_options(madrona_libcxx_except_static INTERFACE
+target_compile_options(madrona_libcxx_except INTERFACE
     -nostdlib++
 )
 
@@ -84,11 +84,11 @@ find_library(MADRONA_STATIC_LIBCXX_EXCEPT libc++.a
     NO_DEFAULT_PATH
 )
 
-target_link_libraries(madrona_libcxx_except_static INTERFACE
+target_link_libraries(madrona_libcxx_except INTERFACE
     "${MADRONA_STATIC_LIBCXX_EXCEPT}"
 )
 
-target_link_options(madrona_libcxx_except_static INTERFACE
+target_link_options(madrona_libcxx_except INTERFACE
     -nostdlib++
 )
 
