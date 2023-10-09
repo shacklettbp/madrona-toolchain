@@ -34,10 +34,10 @@ add_dependencies(madrona_libcxx_shared madrona_libcxx_shlib)
 set_target_properties(madrona_libcxx_shared PROPERTIES IMPORTED_LOCATION ${MADRONA_LIBCXX_BUILDLOC})
 
 target_compile_options(madrona_libcxx_shared INTERFACE
-    -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
+    -nostdinc++ -nostdlib++
 )
-target_link_options(madrona_libcxx INTERFACE
-    -fno-exceptions -fno-rtti -nostdlib++
+target_link_options(madrona_libcxx_shared INTERFACE
+    -nostdlib++
 )
 target_include_directories(madrona_libcxx_shared SYSTEM INTERFACE
     $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
@@ -46,7 +46,7 @@ target_include_directories(madrona_libcxx_shared SYSTEM INTERFACE
 add_library(madrona_libcxx INTERFACE)
 
 target_compile_options(madrona_libcxx INTERFACE
-    -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
+    -nostdinc++ -nostdlib++
 )
 
 target_include_directories(madrona_libcxx SYSTEM INTERFACE
@@ -58,13 +58,13 @@ target_link_libraries(madrona_libcxx INTERFACE
 )
 
 target_link_options(madrona_libcxx INTERFACE
-    -fno-exceptions -fno-rtti -nostdlib++
+    -nostdlib++
 )
 
 add_library(madrona_libcxx_hdrs INTERFACE)
 
 target_compile_options(madrona_libcxx_hdrs INTERFACE
-    -nostdinc++ -nostdlib++ -fno-exceptions -fno-rtti
+    -nostdinc++ -nostdlib++
 )
 
 target_include_directories(madrona_libcxx_hdrs SYSTEM INTERFACE
@@ -97,3 +97,6 @@ add_library(madrona_libcxx_except_hdrs INTERFACE)
 target_compile_options(madrona_libcxx_except_hdrs INTERFACE
     -nostdlib++
 )
+
+install(TARGETS madrona_libcxx madrona_libcxx_except EXPORT madronaLibcxx)
+install(EXPORT madronaLibcxx DESTINATION ${CMAKE_INSTALL_PREFIX})
