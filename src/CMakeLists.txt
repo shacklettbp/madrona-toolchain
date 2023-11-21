@@ -89,21 +89,29 @@ ExternalProject_Add(zstd
 set(ZLIB_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/zlib")
 set(ZLIB_INSTALL "${ZLIB_PREFIX}/install")
 
+list(APPEND ZLIB_CMAKE_ARGS
+    "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
+    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+    "-DCMAKE_INSTALL_PREFIX=${ZLIB_INSTALL}"
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+    "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
+)
+
+if (MADRONA_LINUX)
+    # https://github.com/madler/zlib/issues/856
+    list(APPEND ZLIB_CMAKE_ARGS
+        "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--undefined-version"
+    )
+endif()
+
 ExternalProject_Add(zlib
     URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.xz"
     URL_HASH SHA256=${ZLIB_HASH}
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     PREFIX "${ZLIB_PREFIX}"
     INSTALL_DIR "${ZLIB_INSTALL}"
-    CMAKE_ARGS
-        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}"
-        "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
-        "-DCMAKE_INSTALL_PREFIX=${ZLIB_INSTALL}"
-        "-DCMAKE_BUILD_TYPE=Release"
-        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-        "-DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}"
-        # https://github.com/madler/zlib/issues/856
-        "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--undefined-version"
+    CMAKE_ARGS ${ZLIB_CMAKE_ARGS}
 )
 
 list(APPEND LLVM_COMMON_ARGS
