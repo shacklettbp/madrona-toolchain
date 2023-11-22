@@ -90,7 +90,6 @@ target_link_libraries(madrona_libcxx_except INTERFACE
 
 target_link_options(madrona_libcxx_except INTERFACE
     -nostdlib++
-    -Wl,--as-needed
 )
 
 add_library(madrona_libcxx_except_hdrs INTERFACE)
