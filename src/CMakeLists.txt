@@ -265,7 +265,7 @@ set(LIBCXX_COMMON_ARGS ${LLVM_COMMON_ARGS})
 list(APPEND LIBCXX_COMMON_ARGS
     -DCMAKE_OSX_ARCHITECTURES=${EXT_OSX_ARCHITECTURES}
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-    -DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi
+    -DLLVM_ENABLE_RUNTIMES=libcxx$<SEMICOLON>libcxxabi$<SEMICOLON>libunwind
     "-DCMAKE_C_COMPILER=${NEW_C_COMPILER}"
     "-DCMAKE_CXX_COMPILER=${NEW_CXX_COMPILER}"
     "-DCMAKE_C_FLAGS=${LLVM_C_FLAGS} -nostdlib++ -nostdinc++"
@@ -297,7 +297,7 @@ ExternalProject_Add(libcxx-noexcept
         -DLIBCXX_SHARED_OUTPUT_NAME=c++-noexcept
         -DLIBCXX_STATIC_OUTPUT_NAME=c++-noexcept
     SOURCE_SUBDIR runtimes
-    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi
+    BUILD_COMMAND ${CMAKE_COMMAND} --build "${LIBCXX_BUILD}" --target cxx --target cxx_experimental --target cxxabi --target unwind
 )
 
 install(DIRECTORY ${LIBCXX_NOEXCEPT_INSTALL}/include
