@@ -51,14 +51,12 @@ function(madrona_setup_toolchain)
     set(DEPS_URL "https://github.com/shacklettbp/madrona-toolchain/releases/download/${MADRONA_TOOLCHAIN_VERSION}/madrona-toolchain-${MADRONA_TOOLCHAIN_VERSION}-${TOOLCHAIN_OS_NAME}-${TOOLCHAIN_ARCH}.tar.xz")
     
     set(FETCHCONTENT_QUIET FALSE)
+    set(FETCHCONTENT_BASE_DIR "${TOOLCHAIN_REPO}/cmake-tmp")
     FetchContent_Declare(MadronaBundledToolchain
         URL "${DEPS_URL}"
         URL_HASH SHA256=${MADRONA_TOOLCHAIN_HASH}
-        DOWNLOAD_DIR "${TOOLCHAIN_REPO}/download"
-        DOWNLOAD_NAME cur.tar # Can't name it .tar.xz or CMake will ignore
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
         SOURCE_DIR "${TOOLCHAIN_REPO}/bundled-toolchain"
-        STAMP_DIR "${TOOLCHAIN_REPO}/download/timestamps"
     )
     
     FetchContent_MakeAvailable(MadronaBundledToolchain)
