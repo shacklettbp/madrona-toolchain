@@ -57,8 +57,6 @@ set(LLVM_TOOLCHAIN_TOOLS ${TOOLCHAIN_TOOLS} CACHE STRING "")
 
 set(LLVM_DISTRIBUTION_COMPONENTS
     clang
-    libclang
-    libclang-headers
     lld
     LTO
     clang-apply-replacements

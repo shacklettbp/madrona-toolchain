@@ -17,11 +17,11 @@ target_compile_options(madrona_libcxx INTERFACE
 )
 
 target_include_directories(madrona_libcxx SYSTEM INTERFACE
-    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
+    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-madrona/include/c++/v1>
 )
 
 target_link_libraries(madrona_libcxx INTERFACE
-    "${TOOLCHAIN_ROOT}/libcxx-noexcept/lib/libc++-noexcept.a"
+    "${TOOLCHAIN_ROOT}/libcxx-madrona/lib/libc++-madrona.a"
 )
 
 target_link_options(madrona_libcxx INTERFACE
@@ -35,7 +35,7 @@ target_compile_options(madrona_libcxx_hdrs INTERFACE
 )
 
 target_include_directories(madrona_libcxx_hdrs SYSTEM INTERFACE
-    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-noexcept/include/c++/v1>
+    $<BUILD_INTERFACE:${TOOLCHAIN_ROOT}/libcxx-madrona/include/c++/v1>
 )
 
 install(TARGETS madrona_libcxx EXPORT madronaLibcxx)
