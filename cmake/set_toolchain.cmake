@@ -55,8 +55,8 @@ function(madrona_setup_toolchain)
     FetchContent_Declare(MadronaBundledToolchain
         URL "${DEPS_URL}"
         URL_HASH SHA256=${MADRONA_TOOLCHAIN_HASH}
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE 
         SOURCE_DIR "${TOOLCHAIN_REPO}/bundled-toolchain"
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE 
     )
     
     FetchContent_MakeAvailable(MadronaBundledToolchain)
