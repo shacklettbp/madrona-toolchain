@@ -50,45 +50,47 @@ inline void opDeleteAlignImpl(void *ptr, std::align_val_t al) noexcept
 
 }
 
-void * operator new(size_t num_bytes)
+#define WEAK_SYM __attribute__((__weak__))
+
+WEAK_SYM void * operator new(size_t num_bytes)
 {
     return ::opNewImpl(num_bytes);
 }
 
-void operator delete(void *ptr) noexcept
+WEAK_SYM void operator delete(void *ptr) noexcept
 {
     ::opDeleteImpl(ptr);
 }
 
-void * operator new(
+WEAK_SYM void * operator new(
     size_t num_bytes, const std::nothrow_t &) noexcept
 {
     return ::opNewImpl(num_bytes);
 }
 
-void operator delete(
+WEAK_SYM void operator delete(
     void *ptr, const std::nothrow_t &) noexcept
 {
     ::opDeleteImpl(ptr);
 }
 
-void * operator new[](size_t num_bytes)
+WEAK_SYM void * operator new[](size_t num_bytes)
 {
     return ::opNewImpl(num_bytes);
 }
 
-void operator delete[](void *ptr) noexcept
+WEAK_SYM void operator delete[](void *ptr) noexcept
 {
     ::opDeleteImpl(ptr);
 }
 
-void * operator new[](
+WEAK_SYM void * operator new[](
     size_t num_bytes, const std::nothrow_t &) noexcept
 {
     return ::opNewImpl(num_bytes);
 }
 
-void operator delete[](
+WEAK_SYM void operator delete[](
     void *ptr, const std::nothrow_t &) noexcept
 {
     ::opDeleteImpl(ptr);
@@ -96,45 +98,45 @@ void operator delete[](
 
 // Aligned versions
 
-void * operator new(size_t num_bytes, std::align_val_t al)
+WEAK_SYM void * operator new(size_t num_bytes, std::align_val_t al)
 {
     return ::opNewAlignImpl(num_bytes, al);
 }
 
-void operator delete(void *ptr, std::align_val_t al) noexcept
+WEAK_SYM void operator delete(void *ptr, std::align_val_t al) noexcept
 {
     ::opDeleteAlignImpl(ptr, al);
 }
 
-void * operator new(
+WEAK_SYM void * operator new(
     size_t num_bytes, std::align_val_t al, const std::nothrow_t &) noexcept
 {
     return ::opNewAlignImpl(num_bytes, al);
 }
 
-void operator delete(
+WEAK_SYM void operator delete(
     void *ptr, std::align_val_t al, const std::nothrow_t &) noexcept
 {
     ::opDeleteAlignImpl(ptr, al);
 }
 
-void * operator new[](size_t num_bytes, std::align_val_t al)
+WEAK_SYM void * operator new[](size_t num_bytes, std::align_val_t al)
 {
     return ::opNewAlignImpl(num_bytes, al);
 }
 
-void operator delete[](void *ptr, std::align_val_t al) noexcept
+WEAK_SYM void operator delete[](void *ptr, std::align_val_t al) noexcept
 {
     ::opDeleteAlignImpl(ptr, al);
 }
 
-void * operator new[](
+WEAK_SYM void * operator new[](
     size_t num_bytes, std::align_val_t al, const std::nothrow_t &) noexcept
 {
     return ::opNewAlignImpl(num_bytes, al);
 }
 
-void operator delete[](
+WEAK_SYM void operator delete[](
     void *ptr, std::align_val_t al, const std::nothrow_t &) noexcept
 {
     ::opDeleteAlignImpl(ptr, al);
