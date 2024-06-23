@@ -4,14 +4,14 @@ get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
 set(NAME madrona-toolchain-compile)
 
 if (APPLE)
-    option(MADRONA_TOOLCHAIN_MACOS_ARCH "macOS compiler host architecture")
+    set(MADRONA_TOOLCHAIN_MACOS_ARCH "" CACHE STRING "macOS compiler host architecture")
     if (NOT MADRONA_TOOLCHAIN_MACOS_ARCH)
         message(FATAL_ERROR "Must specify macOS host architecture")
     endif()
 
-    set(CMAKE_OSX_ARCHITECTURES "${MADRONA_TOOLCHAIN_MACOS_ARCH}")
+    set(CMAKE_OSX_ARCHITECTURES "${MADRONA_TOOLCHAIN_MACOS_ARCH}" CACHE STRING "")
     list(JOIN CMAKE_OSX_ARCHITECTURES "$<SEMICOLON>" EXT_OSX_ARCHITECTURES)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "")
 endif()
 
 project(${NAME})
