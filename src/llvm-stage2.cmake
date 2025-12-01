@@ -24,12 +24,12 @@ else()
     set(LIBUNWIND_INSTALL_LIBRARY ON CACHE BOOL "")
 endif()
 
-if (APPLE)
-    # macOS universal build fails with LTO due to mixed LLVM IR and MachO
-    # .o files in libLLVMSupport.a. This option disables those assembly files
-    # with no other impact currently (LLVM 15) than slightly reduced x86 perf.
-    set(LLVM_DISABLE_ASSEMBLY_FILES ON CACHE BOOL "")
-endif()
+#if (APPLE)
+#    # macOS universal build fails with LTO due to mixed LLVM IR and MachO
+#    # .o files in libLLVMSupport.a. This option disables those assembly files
+#    # with no other impact currently (LLVM 15) than slightly reduced x86 perf.
+#    set(LLVM_DISABLE_ASSEMBLY_FILES ON CACHE BOOL "")
+#endif()
 
 list(APPEND TOOLCHAIN_TOOLS
     dsymutil
