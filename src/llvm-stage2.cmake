@@ -2,12 +2,20 @@ include("${CMAKE_CURRENT_LIST_DIR}/llvm-common.cmake")
 
 set(LLVM_TARGETS_TO_BUILD AArch64 X86 CACHE STRING "")
 
+set(LLVM_ENABLE_PROJECTS "clang;clang-tools-extra;lld" CACHE STRING "")
+if (APPLE)
+  set(LLVM_ENABLE_RUNTIMES "compiler-rt" CACHE STRING "")
+else()
+  set(LLVM_ENABLE_RUNTIMES "compiler-rt;libunwind" CACHE STRING "")
+endif()
+
 set(LLVM_INSTALL_TOOLCHAIN_ONLY ON CACHE BOOL "")
 set(LLVM_CREATE_XCODE_TOOLCHAIN ON CACHE BOOL "")
 
 set(COMPILER_RT_ENABLE_IOS OFF CACHE BOOL "")
 set(COMPILER_RT_ENABLE_WATCHOS OFF CACHE BOOL "")
 set(COMPILER_RT_ENABLE_TVOS OFF CACHE BOOL "")
+set(COMPILER_RT_DEFAULT_TARGET_ONLY ON CACHE BOOL "")
 set(LLVM_BUILD_EXTERNAL_COMPILER_RT ON CACHE BOOL "")
 
 if (APPLE OR WIN32)
@@ -43,15 +51,6 @@ endif()
 
 set(LLVM_TOOLCHAIN_TOOLS ${TOOLCHAIN_TOOLS} CACHE STRING "")
 
-set(PLATFORM_COMPONENTS)
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  list(APPEND PLATFORM_COMPONENTS
-    builtins
-    runtimes
-    compiler-rt
-  )
-endif()
-
 set(LLVM_DISTRIBUTION_COMPONENTS
     clang
     lld
@@ -66,9 +65,10 @@ set(LLVM_DISTRIBUTION_COMPONENTS
     clangd
     find-all-symbols
     Remarks
-    ${PLATFORM_COMPONENTS}
+    builtins
+    runtimes
+    compiler-rt
     ${LLVM_TOOLCHAIN_TOOLS}
 
     CACHE STRING ""
 )
-unset(PLATFORM_COMPONENTS)
