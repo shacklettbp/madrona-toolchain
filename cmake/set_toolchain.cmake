@@ -9,7 +9,6 @@ function(madrona_setup_toolchain)
     cmake_path(GET CMAKE_CURRENT_FUNCTION_LIST_DIR PARENT_PATH TOOLCHAIN_REPO)
 
     include("${TOOLCHAIN_REPO}/cmake/current-hashes.cmake")
-    include("${TOOLCHAIN_REPO}/cmake/sys-detect.cmake")
 
     find_package(Git QUIET)
     if (NOT DEFINED MADRONA_TOOLCHAIN_VERSION)
@@ -26,7 +25,7 @@ function(madrona_setup_toolchain)
         )
     endif()
 
-    if (MADRONA_LINUX)
+    if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         set(TOOLCHAIN_OS_NAME "linux")
         if (NOT DEFINED MADRONA_TOOLCHAIN_HASH)
             set(MADRONA_TOOLCHAIN_HASH "${MADRONA_TOOLCHAIN_LINUX_HASH}")
@@ -36,7 +35,7 @@ function(madrona_setup_toolchain)
             OUTPUT_VARIABLE TOOLCHAIN_ARCH
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-    elseif (MADRONA_MACOS)
+    elseif (APPLE)
         set(TOOLCHAIN_OS_NAME "macos")
         if (NOT DEFINED MADRONA_TOOLCHAIN_HASH)
             set(MADRONA_TOOLCHAIN_HASH "${MADRONA_TOOLCHAIN_MACOS_HASH}")
