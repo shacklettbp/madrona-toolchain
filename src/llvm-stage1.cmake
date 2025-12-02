@@ -68,10 +68,17 @@ set(CLANG_BOOTSTRAP_TARGETS
     CACHE STRING ""
 )
 
-set(CLANG_BOOTSTRAP_EXTRA_DEPS
-    # Critical for macOS otherwise system lipo is used, breaking stage2 LTO
-    lipo
-    libtool
+set(EXTRA_DEPS)
 
-    CACHE STRING ""
+list(APPEND EXTRA_DEPS
+  lipo
+  libtool
 )
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND EXTRA_DEPS builtins runtimes)
+endif()
+
+set(CLANG_BOOTSTRAP_EXTRA_DEPS ${EXTRA_DEPS} CACHE STRING "")
+
+unset(EXTRA_DEPS)

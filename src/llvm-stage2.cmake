@@ -43,6 +43,15 @@ endif()
 
 set(LLVM_TOOLCHAIN_TOOLS ${TOOLCHAIN_TOOLS} CACHE STRING "")
 
+set(PLATFORM_COMPONENTS)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  list(APPEND PLATFORM_COMPONENTS
+    builtins
+    runtimes
+    compiler-rt
+  )
+endif()
+
 set(LLVM_DISTRIBUTION_COMPONENTS
     clang
     lld
@@ -56,11 +65,10 @@ set(LLVM_DISTRIBUTION_COMPONENTS
     clang-tidy
     clangd
     find-all-symbols
-    builtins
-    runtimes
     Remarks
-    compiler-rt
+    ${PLATFORM_COMPONENTS}
     ${LLVM_TOOLCHAIN_TOOLS}
 
     CACHE STRING ""
 )
+unset(PLATFORM_COMPONENTS)
