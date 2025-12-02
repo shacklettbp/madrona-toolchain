@@ -16,6 +16,8 @@ set(LLVM_ENABLE_PROJECTS "clang;clang-tools-extra;lld" CACHE STRING "")
 
 if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
   set(LLVM_ENABLE_RUNTIMES "compiler-rt;libcxx;libcxxabi;libunwind" CACHE STRING "")
+elseif (APPLE)
+  set(LLVM_ENABLE_RUNTIMES "compiler-rt" CACHE STRING "")
 endif()
 
 set(CLANG_INCLUDE_TESTS OFF CACHE BOOL "")
