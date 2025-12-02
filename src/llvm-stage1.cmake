@@ -12,7 +12,7 @@ else()
     set(LLVM_TARGETS_TO_BUILD Native CACHE STRING "")
 endif()
 
-set(LLVM_ENABLE_PROJECTS "clang;lld" CACHE STRING "")
+set(LLVM_ENABLE_PROJECTS "clang;clang-tools-extra;lld" CACHE STRING "")
 
 if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
   set(LLVM_ENABLE_RUNTIMES "compiler-rt;libcxx;libcxxabi;libunwind" CACHE STRING "")
