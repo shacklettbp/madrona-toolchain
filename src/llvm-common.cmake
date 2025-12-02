@@ -15,7 +15,6 @@ set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_CXX_FLAGS})
 set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_CXX_FLAGS})
 
 set(LLVM_ENABLE_PROJECTS "clang;clang-tools-extra;lld" CACHE STRING "")
-set(LLVM_ENABLE_RUNTIMES "compiler-rt;libunwind" CACHE STRING "")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
     # Force to pc-linux as opposed to unknown-linux
