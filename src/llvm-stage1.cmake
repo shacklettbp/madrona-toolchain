@@ -69,8 +69,6 @@ set(CLANG_BOOTSTRAP_TARGETS
 )
 
 set(CLANG_BOOTSTRAP_EXTRA_DEPS
-    builtins
-    runtimes
     # Critical for macOS otherwise system lipo is used, breaking stage2 LTO
     lipo
     libtool
