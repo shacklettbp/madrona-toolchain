@@ -2,12 +2,10 @@ function(madrona_cfg_toolchain)
     cmake_path(GET CMAKE_CURRENT_FUNCTION_LIST_DIR PARENT_PATH TOOLCHAIN_REPO)
     
     if (MADRONA_TOOLCHAIN_ROOT_OVERRIDE)
-        set(TOOLCHAIN_ROOT "${MADRONA_TOOLCHAIN_ROOT_OVERRIDE}")
+      set(TOOLCHAIN_SYSROOT "${MADRONA_TOOLCHAIN_ROOT_OVERRIDE}")
     else()
-        set(TOOLCHAIN_ROOT "${TOOLCHAIN_REPO}/bundled-toolchain")
+      set(TOOLCHAIN_SYSROOT "${TOOLCHAIN_REPO}/bundled-toolchain")
     endif()
-    
-    set(TOOLCHAIN_SYSROOT "${TOOLCHAIN_ROOT}/toolchain")
     
     if (APPLE)
         file(GLOB TOOLCHAIN_SYSROOT "${TOOLCHAIN_SYSROOT}/Toolchains/LLVM*.xctoolchain/usr")
