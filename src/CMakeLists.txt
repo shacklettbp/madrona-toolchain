@@ -105,7 +105,7 @@ list(APPEND ZLIB_CMAKE_ARGS
 )
 
 ExternalProject_Add(zlib
-    URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.xz"
+    URL "https://zlib.net/zlib-${ZLIB_VERSION}.tar.xz"
     URL_HASH SHA256=${ZLIB_HASH}
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     PREFIX "${ZLIB_PREFIX}"
